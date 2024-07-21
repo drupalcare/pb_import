@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Paragraph Bundle Import Node.
+ *
+ * Filename:     pb_import_node.module
+ * Website:      https://www.flashwebcenter.com
+ * Description:  template.
+ * Developer:    Alaa Haddad https://www.alaahaddad.com.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function pb_import_node_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name === 'help.page.paragraphs_bundles') {
+    return _pb_import_helper_render_readme();
+  }
+  return NULL;
+}

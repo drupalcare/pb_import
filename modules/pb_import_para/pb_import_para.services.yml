@@ -1,0 +1,8 @@
+services:
+  pb_import_para.csv_processor.paragraph:
+    class: Drupal\pb_import_para\Service\CSVProcessorPara
+    arguments: ['@file_system', '@logger.factory', '@pb_import_para.paragraph_creator']
+
+  pb_import_para.paragraph_creator:
+    class: Drupal\pb_import_para\Service\ParagraphCreator
+    arguments: ['@logger.factory', '@pb_import.file_manager', '@pb_import.term_manager']

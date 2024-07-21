@@ -1,0 +1,8 @@
+services:
+  pb_import_node.node_creator:
+    class: Drupal\pb_import_node\Service\NodeCreator
+    arguments: ['@entity_type.manager', '@logger.factory', '@pb_import.term_manager', '@pb_import.file_manager']
+
+  pb_import_node.csv_processor.node:
+    class: Drupal\pb_import_node\Service\CSVProcessorNode
+    arguments: ['@file_system', '@logger.factory', '@pb_import_node.node_creator']

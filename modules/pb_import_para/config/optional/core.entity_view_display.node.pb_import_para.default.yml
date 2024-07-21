@@ -1,0 +1,29 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.pb_import_para.pb_import_para_reference
+    - node.type.pb_import_para
+  module:
+    - user
+id: node.pb_import_para.default
+targetEntityType: node
+bundle: pb_import_para
+mode: default
+content:
+  pb_import_para_reference:
+    type: entity_reference_entity_view
+    label: hidden
+    settings:
+      view_mode: default
+      link: true
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  langcode: true

@@ -1,0 +1,6 @@
+pb_import_para.import_para:
+  title: 'Import Paragraphs'
+  description: 'Import and Create paragraph Slideshow from a CSV file'
+  parent: pb_import.paragraphs
+  route_name: pb_import_para.import_para
+  weight: 3

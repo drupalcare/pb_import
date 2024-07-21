@@ -1,0 +1,39 @@
+pb_import.paragraphs_list:
+  path: '/admin/content/paragraphs/paragraphs-list'
+  defaults:
+    _controller: '\Drupal\pb_import\Controller\ParagraphsListController::listParagraphs'
+    _title: 'Paragraphs List'
+  requirements:
+    _permission: 'administer site configuration'
+
+pb_import.register_uploaded_files:
+  path: '/admin/content/paragraphs/register-uploaded-files'
+  defaults:
+    _form: '\Drupal\pb_import\Form\RegisterUploadedFilesForm'
+    _title: 'Register Uploaded Files'
+  requirements:
+    _permission: 'administer site configuration'
+
+pb_import.paragraph_edit:
+  path: '/admin/content/paragraph/{paragraph}/edit'
+  defaults:
+    _controller: '\Drupal\pb_import\Controller\ParagraphEditController::edit'
+    _title: 'Edit Paragraph'
+  requirements:
+    _permission: 'administer paragraphs'
+  options:
+    parameters:
+      paragraph:
+        type: entity:paragraph
+
+pb_import.paragraphs_delete:
+  path: '/admin/content/paragraphs/delete/{paragraph}'
+  defaults:
+    _form: '\Drupal\pb_import\Form\ParagraphsFilterDeleteForm'
+    _title: 'Delete Paragraph'
+  requirements:
+    _permission: 'administer paragraphs'
+  options:
+    parameters:
+      paragraph:
+        type: entity:paragraph

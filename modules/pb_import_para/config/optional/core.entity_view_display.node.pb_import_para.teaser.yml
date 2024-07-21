@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.pb_import_para.pb_import_para_reference
+    - node.type.pb_import_para
+  module:
+    - user
+id: node.pb_import_para.teaser
+targetEntityType: node
+bundle: pb_import_para
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  pb_import_para_reference: true
+  langcode: true

@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'PB Tabs Tag'
+vid: pb_tabs_tag
+description: 'It is used when you import Tabs with PB Import'
+weight: 0
+new_revision: false

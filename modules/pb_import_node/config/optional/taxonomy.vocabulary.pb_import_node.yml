@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'PB Import Node'
+vid: pb_import_node
+description: null
+weight: 0
+new_revision: false

@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.pb_target_body
+    - filter.format.full_html
+    - paragraphs.paragraphs_type.pb_target_bundle
+  module:
+    - text
+id: paragraph.pb_target_bundle.pb_target_body
+field_name: pb_target_body
+entity_type: paragraph
+bundle: pb_target_bundle
+label: Body
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats:
+    - full_html
+field_type: text_long

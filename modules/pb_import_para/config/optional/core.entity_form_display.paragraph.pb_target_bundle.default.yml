@@ -1,0 +1,55 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.pb_target_bundle.pb_target_body
+    - field.field.paragraph.pb_target_bundle.pb_target_image
+    - field.field.paragraph.pb_target_bundle.pb_target_tag
+    - field.field.paragraph.pb_target_bundle.pb_target_title
+    - image.style.thumbnail
+    - paragraphs.paragraphs_type.pb_target_bundle
+  module:
+    - image
+    - text
+id: paragraph.pb_target_bundle.default
+targetEntityType: paragraph
+bundle: pb_target_bundle
+mode: default
+content:
+  pb_target_body:
+    type: text_textarea
+    weight: 2
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  pb_target_image:
+    type: image_image
+    weight: 1
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  pb_target_tag:
+    type: entity_reference_autocomplete
+    weight: 3
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  pb_target_title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  status: true

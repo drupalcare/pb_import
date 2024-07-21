@@ -1,0 +1,16 @@
+services:
+  pb_import.utility:
+    class: Drupal\pb_import\Service\Utility
+    arguments: ['@entity_type.manager']
+
+  pb_import.file_registrar:
+    class: Drupal\pb_import\Service\FileRegistrar
+    arguments: ['@entity_type.manager', '@logger.factory', '@messenger', '@pb_import.utility', '@file_system']
+
+  pb_import.term_manager:
+    class: Drupal\pb_import\Service\TermManager
+    arguments: ['@entity_type.manager', '@logger.factory']
+
+  pb_import.file_manager:
+    class: Drupal\pb_import\Service\FileManager
+    arguments: ['@file_system', '@entity_type.manager', '@logger.factory', '@pb_import.utility']

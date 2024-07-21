@@ -1,0 +1,7 @@
+pb_import_node.import_node:
+  path: '/admin/content/paragraphs/pb-import-node'
+  defaults:
+    _form: '\Drupal\pb_import_node\Form\PBImportNodeForm'
+    _title: 'Import Node'
+  requirements:
+    _permission: 'administer site configuration'

@@ -1,0 +1,9 @@
+name: 'PB Import'
+type: module
+description: 'A module to import content and create nodes/paragraphs from a CSV file.'
+core_version_requirement: ^10 || ^11
+package: Paragraph
+dependencies:
+  - drupal:file
+  - drupal:node
+  - drupal:taxonomy

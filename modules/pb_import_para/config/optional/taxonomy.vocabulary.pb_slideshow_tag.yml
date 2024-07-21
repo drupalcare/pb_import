@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'PB Slideshow Tag'
+vid: pb_slideshow_tag
+description: 'It is used when you import Slideshow with PB Import'
+weight: 0
+new_revision: false

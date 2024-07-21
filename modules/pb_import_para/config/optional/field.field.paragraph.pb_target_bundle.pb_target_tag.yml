@@ -1,0 +1,32 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.pb_target_tag
+    - paragraphs.paragraphs_type.pb_target_bundle
+    - taxonomy.vocabulary.pb_accordion_tag
+    - taxonomy.vocabulary.pb_slideshow_tag
+    - taxonomy.vocabulary.pb_tabs_tag
+id: paragraph.pb_target_bundle.pb_target_tag
+field_name: pb_target_tag
+entity_type: paragraph
+bundle: pb_target_bundle
+label: Tag
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      pb_accordion_tag: pb_accordion_tag
+      pb_slideshow_tag: pb_slideshow_tag
+      pb_tabs_tag: pb_tabs_tag
+    sort:
+      field: name
+      direction: asc
+    auto_create: true
+    auto_create_bundle: pb_accordion_tag
+field_type: entity_reference

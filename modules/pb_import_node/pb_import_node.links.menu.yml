@@ -1,0 +1,6 @@
+pb_import_node.import_node:
+  title: 'Import Nodes'
+  description: 'Import Content'
+  parent: pb_import.paragraphs
+  route_name: pb_import_node.import_node
+  weight: 2

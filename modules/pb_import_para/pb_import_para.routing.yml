@@ -1,0 +1,7 @@
+pb_import_para.import_para:
+  path: '/admin/content/paragraphs/pb-import-para'
+  defaults:
+    _form: '\Drupal\pb_import_para\Form\PBImportParaForm'
+    _title: 'Import Paragraph'
+  requirements:
+    _permission: 'administer content'

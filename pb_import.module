@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Paragraphs Bundles Import.
+ *
+ * Filename:     pb_import.module
+ * Website:      https://www.flashwebcenter.com
+ * Description:  template.
+ * Developer:    Alaa Haddad https://www.alaahaddad.com.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function pb_import_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name === 'help.page.paragraphs_bundles') {
+    return _pb_import_helper_render_readme();
+  }
+  return NULL;
+}
+
+/**
+ * Helper function to render README.md.
+ */
+function _pb_import_helper_render_readme() {
+  $text = file_get_contents(__DIR__ . "/README.md");
+
+  if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
+    return '<pre>' . $text . '</pre>';
+  }
+
+  // Use the Markdown filter to render the README.
+  $filter_manager = \Drupal::service('plugin.manager.filter');
+  $settings = \Drupal::configFactory()
+    ->get('markdown.settings')
+    ->getRawData();
+  $config = ['settings' => $settings];
+  $filter = $filter_manager->createInstance('markdown', $config);
+  return $filter->process($text, 'en');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function pb_import_form_paragraph_form_alter(&$form, &$form_state, $form_id) {
+  // Add a custom submit handler to redirect after saving.
+  $form['actions']['submit']['#submit'][] = 'pb_import_paragraph_form_submit';
+}
+
+/**
+ * Custom submit handler for the paragraph form.
+ */
+function pb_import_paragraph_form_submit($form, &$form_state) {
+  // Get the paragraph entity from the form state.
+  $paragraph = $form_state->getFormObject()->getEntity();
+  // Set a message to inform the user that the paragraph has been saved.
+  \Drupal::messenger()->addMessage(t('The paragraph %label has been saved.', ['%label' => $paragraph->label()]));
+  // Redirect to the paragraphs list page.
+  $form_state->setRedirect('pb_import.paragraphs_list');
+}

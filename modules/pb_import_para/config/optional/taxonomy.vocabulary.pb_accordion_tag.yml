@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'PB Accordion Tag'
+vid: pb_accordion_tag
+description: 'It is used when you import Accordion with PB Import'
+weight: 0
+new_revision: false
