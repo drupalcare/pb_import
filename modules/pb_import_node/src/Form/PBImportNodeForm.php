@@ -16,19 +16,67 @@ use Drupal\pb_import_node\Service\CSVProcessorNode;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- *
+ * Form for importing nodes from a CSV file.
  */
 class PBImportNodeForm extends FormBase {
 
+  /**
+   * The CSV processor service.
+   *
+   * @var \Drupal\pb_import_node\Service\CSVProcessorNode
+   */
   protected CSVProcessorNode $csvProcessorNode;
+
+  /**
+   * The file manager service.
+   *
+   * @var \Drupal\pb_import\Service\FileManager
+   */
   protected FileManager $fileManager;
+
+  /**
+   * The term manager service.
+   *
+   * @var \Drupal\pb_import\Service\TermManager
+   */
   protected TermManager $termManager;
+
+  /**
+   * The utility service.
+   *
+   * @var \Drupal\pb_import\Service\Utility
+   */
   protected Utility $utility;
+
+  /**
+   * The logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
   protected $messenger;
 
   /**
+   * PBImportNodeForm constructor.
    *
+   * @param \Drupal\pb_import_node\Service\CSVProcessorNode $csvProcessorNode
+   *   The CSV processor service.
+   * @param \Drupal\pb_import\Service\FileManager $fileManager
+   *   The file manager service.
+   * @param \Drupal\pb_import\Service\TermManager $termManager
+   *   The term manager service.
+   * @param \Drupal\pb_import\Service\Utility $utility
+   *   The utility service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger channel factory.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
   public function __construct(CSVProcessorNode $csvProcessorNode, FileManager $fileManager, TermManager $termManager, Utility $utility, LoggerChannelFactoryInterface $logger_factory, MessengerInterface $messenger) {
     $this->csvProcessorNode = $csvProcessorNode;
@@ -40,7 +88,7 @@ class PBImportNodeForm extends FormBase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     return new static(
@@ -54,14 +102,14 @@ class PBImportNodeForm extends FormBase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function getFormId() {
     return 'pb_import_node_form';
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $form['csv_file'] = [
@@ -105,7 +153,7 @@ class PBImportNodeForm extends FormBase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $validators = ['file_validate_extensions' => ['csv']];
@@ -118,7 +166,7 @@ class PBImportNodeForm extends FormBase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $csv_file = $form_state->getValue('csv_file');

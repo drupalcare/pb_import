@@ -1,6 +1,6 @@
-name: PB Import Node
+name: 'PB Import Node'
 type: module
-description: This module create a content type with some fields to import content and can be used in Views Slideshow.
+description: 'This module create a content type with some fields to import content and can be used in Views Slideshow.'
 core_version_requirement: ^9.4 || ^10
 package: Paragraphs
 dependencies:

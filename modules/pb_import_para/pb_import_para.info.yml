@@ -1,6 +1,6 @@
-name: PB Import Paragraph
+name: 'PB Import Paragraph'
 type: module
-description: This module will export paragraphs from CSV file to several Paragraphs Bundles.
+description: 'This module will export paragraphs from CSV file to several Paragraphs Bundles.'
 core_version_requirement: ^9.4 || ^10
 package: Paragraphs
 dependencies:

@@ -12,20 +12,66 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\file\Entity\File;
 
 /**
- *
+ * Service to register files in the Drupal file system.
  */
 class FileRegistrar {
   use StringTranslationTrait;
 
+  /**
+   * The entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * The logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\MessengerInterface
+   */
   protected MessengerInterface $messenger;
+
+  /**
+   * The utility service.
+   *
+   * @var \Drupal\pb_import\Service\Utility
+   */
   protected Utility $utility;
+
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
   protected FileSystemInterface $fileSystem;
+
+  /**
+   * Allowed file extensions.
+   *
+   * @var array
+   */
   protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
   /**
+   * FileRegistrar constructor.
    *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger channel factory.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
+   * @param \Drupal\pb_import\Service\Utility $utility
+   *   The utility service.
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelFactoryInterface $logger_factory, MessengerInterface $messenger, Utility $utility, FileSystemInterface $file_system) {
     $this->entityTypeManager = $entity_type_manager;
@@ -36,14 +82,18 @@ class FileRegistrar {
   }
 
   /**
+   * Registers files in the specified directory.
    *
+   * @param string $relative_directory
+   *   The relative directory path.
    */
   public function registerFiles($relative_directory) {
     // Get the base path specific to the site.
     $site_specific_path = $this->utility->getSiteSpecificPath();
     $this->logger->info('Site-specific path: @path', ['@path' => $site_specific_path]);
 
-    // Construct the full path by appending the user-provided relative directory directly.
+    // Construct the full path by appending the user-provided relative
+    // directory directly.
     $source_directory = rtrim($site_specific_path, '/') . '/' . trim($relative_directory, '/');
     $this->logger->info('Constructed source directory: @dir', ['@dir' => $source_directory]);
 
@@ -94,8 +144,10 @@ class FileRegistrar {
               $processed++;
             }
             catch (\Exception $e) {
-              $this->logger->error('Failed to register file: @file. Error: @error', ['@file' => $file_uri, '@error' => $e->getMessage()]);
-              $this->messenger->addError($this->t('Failed to register file: @file', ['@file' => $sanitized_file_name]));
+              $this->logger->error('Failed to register file: @file. Error: @error',
+                ['@file' => $file_uri, '@error' => $e->getMessage()]);
+              $this->messenger->addError($this->t('Failed to register file: @file',
+                ['@file' => $sanitized_file_name]));
             }
           }
           else {
@@ -114,11 +166,18 @@ class FileRegistrar {
       }
     }
 
-    $this->messenger->addMessage($this->t('Files processed: @processed, Files skipped: @skipped', ['@processed' => $processed, '@skipped' => $skipped]));
+    $this->messenger->addMessage($this->t('Files processed: @processed, Files skipped: @skipped',
+      ['@processed' => $processed, '@skipped' => $skipped]));
   }
 
   /**
+   * Sanitizes the file name.
    *
+   * @param string $file_name
+   *   The file name to sanitize.
+   *
+   * @return string
+   *   The sanitized file name.
    */
   private function sanitizeFileName($file_name) {
     // Use Drupal's HTML utility to escape and sanitize the file name.

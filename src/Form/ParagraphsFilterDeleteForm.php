@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class ParagraphsFilterDeleteForm extends FormBase {
 
   /**
-   * The entity type manager.
+   * The entity type manager service.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
@@ -152,7 +152,7 @@ class ParagraphsFilterDeleteForm extends FormBase {
   }
 
   /**
-   * Fetch total paragraph count.
+   * Fetches total paragraph count.
    *
    * @param string|null $type
    *   The paragraph type to filter by.
@@ -173,7 +173,7 @@ class ParagraphsFilterDeleteForm extends FormBase {
   }
 
   /**
-   * Fetch paragraphs for the table.
+   * Fetches paragraphs for the table.
    *
    * @param string|null $type
    *   The paragraph type to filter by.
@@ -219,7 +219,7 @@ class ParagraphsFilterDeleteForm extends FormBase {
   }
 
   /**
-   * Fetch available paragraph types.
+   * Fetches available paragraph types.
    *
    * @return array
    *   The array of paragraph types.

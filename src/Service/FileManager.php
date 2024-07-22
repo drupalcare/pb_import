@@ -9,18 +9,56 @@ use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\file\Entity\File;
 
 /**
- *
+ * Service to manage file operations.
  */
 class FileManager {
 
+  /**
+   * The file system service.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
   protected FileSystemInterface $fileSystem;
+
+  /**
+   * The entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected EntityTypeManagerInterface $entityTypeManager;
+
+  /**
+   * The logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
   protected LoggerChannelInterface $logger;
+
+  /**
+   * The utility service.
+   *
+   * @var \Drupal\pb_import\Service\Utility
+   */
   protected Utility $utility;
+
+  /**
+   * Allowed file extensions.
+   *
+   * @var array
+   */
   protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
   /**
+   * FileManager constructor.
    *
+   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   *   The file system service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger channel factory.
+   * @param \Drupal\pb_import\Service\Utility $utility
+   *   The utility service.
    */
   public function __construct(FileSystemInterface $file_system, EntityTypeManagerInterface $entity_type_manager, LoggerChannelFactoryInterface $logger_factory, Utility $utility) {
     $this->fileSystem = $file_system;
@@ -30,7 +68,15 @@ class FileManager {
   }
 
   /**
+   * Retrieves the file ID by file path and name.
    *
+   * @param string $folder_name
+   *   The folder name.
+   * @param string $image_name
+   *   The image name.
+   *
+   * @return int|null
+   *   The file ID or NULL if the file does not exist.
    */
   public function getFileId($folder_name, $image_name) {
     $site_specific_path = $this->utility->getSiteSpecificPath();
@@ -66,7 +112,13 @@ class FileManager {
   }
 
   /**
+   * Validates the file extension.
    *
+   * @param object $file
+   *   The file object.
+   *
+   * @return bool
+   *   TRUE if the file extension is valid, FALSE otherwise.
    */
   public function validateFileExtension($file) {
     $extension = pathinfo($file->filename, PATHINFO_EXTENSION);
@@ -74,7 +126,13 @@ class FileManager {
   }
 
   /**
+   * Processes the file.
    *
+   * @param object $file
+   *   The file object.
+   *
+   * @return bool
+   *   TRUE if the file was processed successfully, FALSE otherwise.
    */
   public function processFile($file) {
     if (!$this->validateFileExtension($file)) {
@@ -82,7 +140,7 @@ class FileManager {
       return FALSE;
     }
 
-    // Process the file if it has a valid extension
+    // Process the file if it has a valid extension.
     // Your processing logic here...
     return TRUE;
   }

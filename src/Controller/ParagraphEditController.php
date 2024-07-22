@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ParagraphEditController.
+ *
+ * Provides functionality to edit paragraphs.
  */
 class ParagraphEditController extends ControllerBase {
 

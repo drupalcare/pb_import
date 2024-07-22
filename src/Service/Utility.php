@@ -3,12 +3,12 @@
 namespace Drupal\pb_import\Service;
 
 /**
- *
+ * Provides utility functions for the pb_import module.
  */
 class Utility {
 
   /**
-   * Get the site-specific files directory path.
+   * Gets the site-specific files directory path.
    *
    * @return string
    *   The site-specific files directory path.

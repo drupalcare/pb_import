@@ -12,14 +12,18 @@
         }
     ],
     "homepage": "https://drupal.org/project/pb_import_node",
-  "require": {
-    "drupal/core": "*",
-    "drupal/pb_import": "*",
-    "drupal/paragraphs_bundles": "*"
-  },
+    "require": {
+        "drupal/core": "^9.4 || ^10",
+        "drupal/pb_import": "*",
+        "drupal/paragraphs_bundles": "*"
+    },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import_node",
         "source": "https://git.drupalcode.org/project/pb_import_node"
+    },
+    "autoload": {
+        "psr-4": {
+            "Drupal\\pb_import_node\\": "src/"
+        }
     }
 }
-

@@ -10,18 +10,20 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Class ParagraphsListController.
+ *
+ * Provides functionality to list paragraphs with pagination and filtering.
  */
 class ParagraphsListController extends ControllerBase {
 
   /**
-   * The pager manager.
+   * The pager manager service.
    *
    * @var \Drupal\Core\Pager\PagerManagerInterface
    */
   protected $pagerManager;
 
   /**
-   * The entity type manager.
+   * The entity type manager service.
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
@@ -38,9 +40,9 @@ class ParagraphsListController extends ControllerBase {
    * Constructs a ParagraphsListController object.
    *
    * @param \Drupal\Core\Pager\PagerManagerInterface $pager_manager
-   *   The pager manager.
+   *   The pager manager service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
+   *   The entity type manager service.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    */
