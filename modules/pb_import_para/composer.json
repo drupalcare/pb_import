@@ -13,17 +13,12 @@
     ],
     "homepage": "https://drupal.org/project/pb_import_para",
     "require": {
-        "drupal/core": "^9.4 || ^10",
+        "drupal/core": "^10 || ^11",
         "drupal/pb_import": "*",
         "drupal/paragraphs_bundles": "*"
     },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import_para",
         "source": "https://git.drupalcode.org/project/pb_import_para"
-    },
-    "autoload": {
-        "psr-4": {
-            "Drupal\\pb_import_para\\": "src/"
-        }
     }
 }
