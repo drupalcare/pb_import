@@ -74,7 +74,8 @@ class CSVProcessorNode {
     $path = $csv_file->getFileUri();
     $real_path = $this->fileSystem->realpath($path);
 
-    $this->logger->info('Processing CSV file at @path', ['@path' => $real_path]);
+    $this->logger->info('Processing CSV file at @path',
+      ['@path' => $real_path]);
 
     if (($handle = fopen($real_path, 'r')) !== FALSE) {
       $header = fgetcsv($handle, 1000, ',');
@@ -87,35 +88,50 @@ class CSVProcessorNode {
         return $validation_result;
       }
 
-      $row_number = 1; // Initialize row number starting from the first data row
+      // Initialize row number starting from the first data row.
+      $row_number = 1;
       while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
         $row_number++;
 
         // Check for row length.
         if (count($data) != count($header)) {
-          $this->logger->warning('Skipping malformed row @row_number: @row', ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+          $this->logger->warning('Skipping malformed row @row_number: @row',
+            [
+              '@row_number' => $row_number,
+              '@row' => print_r($data, TRUE),
+            ]);
           $skipped++;
           $skipped_rows[] = $row_number;
           continue;
         }
 
-        // Trim whitespace from values.
-        $data = array_map('trim', $data);
+        // Trim whitespace from values and decode HTML entities.
+        $data = array_map(function ($item) {
+          return html_entity_decode(trim($item));
+        }, $data);
         // Combine header and data.
         $data = array_combine($header, $data);
 
-        // Simplified condition: process row if it has a title and either image or body.
-        if (!empty($data['csv_node_title']) && (!empty($data['csv_image_url']) || !empty($data['csv_node_body']))) {
+        // Simplified condition: process row if it has a title and
+        // either image or body.
+        if (!empty($data['csv_node_title']) &&
+          (!empty($data['csv_image_url']) ||
+            !empty($data['csv_node_body']))) {
           try {
             $result = $this->creator->create($data, $folder_name, $content_type, $vocabulary_name);
             if ($result) {
               $processed++;
-            } else {
-              $this->logger->warning('Skipping row @row_number due to failed creation: @row', ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+            }
+            else {
+              $this->logger->warning('Skipping row @row_number due to failed creation: @row', [
+                '@row_number' => $row_number,
+                '@row' => print_r($data, TRUE),
+              ]);
               $skipped++;
               $skipped_rows[] = $row_number;
             }
-          } catch (\Exception $e) {
+          }
+          catch (\Exception $e) {
             $this->logger->error('Error processing row @row_number: @row. Error: @error', [
               '@row_number' => $row_number,
               '@row' => implode(', ', $data),
@@ -124,21 +140,36 @@ class CSVProcessorNode {
             $skipped++;
             $skipped_rows[] = $row_number;
           }
-        } else {
-          $this->logger->warning('Skipping row @row_number due to missing title or both image and body: @row', ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+        }
+        else {
+          $this->logger->warning('Skipping row @row_number due to missing title or both image and body: @row',
+            ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
           $skipped++;
           $skipped_rows[] = $row_number;
         }
       }
       fclose($handle);
-    } else {
+    }
+    else {
       $error_message = 'Failed to open CSV file at @path';
       $this->logger->error($error_message, ['@path' => $real_path]);
-      return ['status' => 'error', 'message' => $error_message, 'processed' => $processed, 'skipped' => $skipped, 'skipped_rows' => $skipped_rows];
+      return [
+        'status' => 'error',
+        'message' => $error_message,
+        'processed' => $processed,
+        'skipped' => $skipped,
+        'skipped_rows' => $skipped_rows,
+      ];
     }
 
     $status_message = "Nodes processed: $processed, Nodes skipped: $skipped";
-    return ['status' => 'success', 'message' => $status_message, 'processed' => $processed, 'skipped' => $skipped, 'skipped_rows' => $skipped_rows];
+    return [
+      'status' => 'success',
+      'message' => $status_message,
+      'processed' => $processed,
+      'skipped' => $skipped,
+      'skipped_rows' => $skipped_rows,
+    ];
   }
 
   /**
@@ -187,4 +218,5 @@ class CSVProcessorNode {
 
     return ['status' => 'success'];
   }
+
 }

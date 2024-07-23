@@ -91,7 +91,8 @@ class CSVProcessorPara {
     $path = $file->getFileUri();
     $real_path = $this->fileSystem->realpath($path);
 
-    $this->logger->info('Processing CSV file at @path', ['@path' => $real_path]);
+    $this->logger->info('Processing CSV file at @path',
+      ['@path' => $real_path]);
 
     $required_headers = $this->getRequiredHeaders();
 
@@ -108,21 +109,26 @@ class CSVProcessorPara {
         return $validation_result;
       }
 
-      $row_number = 1; // Initialize row number starting from the first data row
+      // Initialize row number starting from the first data row.
+      $row_number = 1;
       while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
         $row_number++;
 
         // Check for row length.
         if (count($data) != count($header)) {
-          $this->logger->warning('Skipping malformed row @row_number: @row', ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+          $this->logger->warning('Skipping malformed row @row_number: @row',
+            ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
           $skipped++;
           $skipped_rows[] = $row_number;
           continue;
         }
 
-        // Trim whitespace from values.
-        $data = array_map('trim', $data);
-        $this->logger->debug('CSV Row @row_number: @data', ['@row_number' => $row_number, '@data' => print_r($data, TRUE)]);
+        // Trim whitespace from values and decode HTML entities.
+        $data = array_map(function ($item) {
+          return html_entity_decode(trim($item));
+        }, $data);
+        $this->logger->debug('CSV Row @row_number: @data',
+          ['@row_number' => $row_number, '@data' => print_r($data, TRUE)]);
         $rows[] = array_combine($header, $data);
       }
       fclose($handle);
@@ -130,10 +136,17 @@ class CSVProcessorPara {
     else {
       $error_message = 'Failed to open CSV file at @path';
       $this->logger->error($error_message, ['@path' => $real_path]);
-      return ['status' => 'error', 'message' => $error_message, 'processed' => $processed, 'skipped' => $skipped, 'skipped_rows' => $skipped_rows];
+      return [
+        'status' => 'error',
+        'message' => $error_message,
+        'processed' => $processed,
+        'skipped' => $skipped,
+        'skipped_rows' => $skipped_rows,
+      ];
     }
 
-    $this->logger->info('Processed CSV rows: @rows', ['@rows' => print_r($rows, TRUE)]);
+    $this->logger->info('Processed CSV rows: @rows',
+      ['@rows' => print_r($rows, TRUE)]);
 
     $section_paragraphs = [];
     foreach ($rows as $row_number => $row) {
@@ -190,7 +203,13 @@ class CSVProcessorPara {
     if (empty($section_paragraphs)) {
       $error_message = 'No section paragraphs were created. Cannot create parent paragraph.';
       $this->logger->error($error_message);
-      return ['status' => 'error', 'message' => $error_message, 'processed' => $processed, 'skipped' => $skipped, 'skipped_rows' => $skipped_rows];
+      return [
+        'status' => 'error',
+        'message' => $error_message,
+        'processed' => $processed,
+        'skipped' => $skipped,
+        'skipped_rows' => $skipped_rows,
+      ];
     }
 
     $parent_data = [
@@ -198,11 +217,13 @@ class CSVProcessorPara {
       $parent_entity_reference_field => $section_paragraphs,
     ];
 
-    $this->logger->info('Creating parent paragraph with data: @data', ['@data' => print_r($parent_data, TRUE)]);
+    $this->logger->info('Creating parent paragraph with data: @data',
+      ['@data' => print_r($parent_data, TRUE)]);
     $parent_paragraph = $this->paragraphCreator->createParagraph($parent_data, $folder_name, $parent_paragraph_type, $vocabulary_name, TRUE);
 
     if ($parent_paragraph) {
-      $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id', ['@parent_paragraph_id' => $parent_paragraph->id()]);
+      $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id',
+        ['@parent_paragraph_id' => $parent_paragraph->id()]);
     }
     else {
       $this->logger->error('Failed to create the parent paragraph.');
@@ -282,4 +303,5 @@ class CSVProcessorPara {
 
     return ['status' => 'success'];
   }
+
 }
