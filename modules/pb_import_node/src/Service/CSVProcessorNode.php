@@ -74,8 +74,7 @@ class CSVProcessorNode {
     $path = $csv_file->getFileUri();
     $real_path = $this->fileSystem->realpath($path);
 
-    $this->logger->info('Processing CSV file at @path',
-      ['@path' => $real_path]);
+    $this->logger->info('Processing CSV file at @path', ['@path' => $real_path]);
 
     if (($handle = fopen($real_path, 'r')) !== FALSE) {
       $header = fgetcsv($handle, 1000, ',');
@@ -95,11 +94,10 @@ class CSVProcessorNode {
 
         // Check for row length.
         if (count($data) != count($header)) {
-          $this->logger->warning('Skipping malformed row @row_number: @row',
-            [
-              '@row_number' => $row_number,
-              '@row' => print_r($data, TRUE),
-            ]);
+          $this->logger->warning('Skipping malformed row @row_number: @row', [
+            '@row_number' => $row_number,
+            '@row' => print_r($data, TRUE),
+          ]);
           $skipped++;
           $skipped_rows[] = $row_number;
           continue;
@@ -112,21 +110,53 @@ class CSVProcessorNode {
         // Combine header and data.
         $data = array_combine($header, $data);
 
-        // Simplified condition: process row if it has a title and
-        // either image or body.
-        if (!empty($data['csv_node_title']) &&
-          (!empty($data['csv_image_url']) ||
-            !empty($data['csv_node_body']))) {
+        // If image_url is empty, set image_alt and image_title to empty.
+        if (empty($data['csv_image_url'])) {
+          $data['csv_image_alt'] = '';
+          $data['csv_image_title'] = '';
+        }
+        else {
+          // Add a check to see if the image URL is readable.
+          if (!$this->isImageUrlValid($data['csv_image_url'])) {
+            if (!empty($data['csv_node_body'])) {
+              $this->logger->error('Skipping row @row_number due to invalid image URL: @url. The body content is present but the row is skipped.', [
+                '@url' => $data['csv_image_url'],
+                '@row_number' => $row_number,
+              ]);
+            }
+            else {
+              $this->logger->error('Failed to read image URL: @url at row @row_number', [
+                '@url' => $data['csv_image_url'],
+                '@row_number' => $row_number,
+              ]);
+            }
+            $skipped++;
+            $skipped_rows[] = $row_number;
+            continue;
+          }
+        }
+
+        // Simplified condition: process row if it has a title and either
+        // image or body.
+        if (!empty($data['csv_node_title']) && (!empty($data['csv_image_url']) || !empty($data['csv_node_body']))) {
           try {
             $result = $this->creator->create($data, $folder_name, $content_type, $vocabulary_name);
             if ($result) {
               $processed++;
             }
             else {
-              $this->logger->warning('Skipping row @row_number due to failed creation: @row', [
-                '@row_number' => $row_number,
-                '@row' => print_r($data, TRUE),
-              ]);
+              if (!empty($data['csv_node_body'])) {
+                $this->logger->warning('Skipping row @row_number due to failed creation, even though body content is present: @row', [
+                  '@row_number' => $row_number,
+                  '@row' => print_r($data, TRUE),
+                ]);
+              }
+              else {
+                $this->logger->warning('Skipping row @row_number due to failed creation: @row', [
+                  '@row_number' => $row_number,
+                  '@row' => print_r($data, TRUE),
+                ]);
+              }
               $skipped++;
               $skipped_rows[] = $row_number;
             }
@@ -142,8 +172,18 @@ class CSVProcessorNode {
           }
         }
         else {
-          $this->logger->warning('Skipping row @row_number due to missing title or both image and body: @row',
-            ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+          if (!empty($data['csv_image_url'])) {
+            $this->logger->warning('Skipping row @row_number due to missing title or body field error, even though image URL is valid: @row', [
+              '@row_number' => $row_number,
+              '@row' => print_r($data, TRUE),
+            ]);
+          }
+          else {
+            $this->logger->warning('Skipping row @row_number due to missing title or both image and body: @row', [
+              '@row_number' => $row_number,
+              '@row' => print_r($data, TRUE),
+            ]);
+          }
           $skipped++;
           $skipped_rows[] = $row_number;
         }
@@ -217,6 +257,20 @@ class CSVProcessorNode {
     }
 
     return ['status' => 'success'];
+  }
+
+  /**
+   * Checks if the image URL is valid and readable.
+   *
+   * @param string $url
+   *   The image URL to check.
+   *
+   * @return bool
+   *   TRUE if the image URL is valid, FALSE otherwise.
+   */
+  protected function isImageUrlValid($url) {
+    $headers = @get_headers($url);
+    return $headers && strpos($headers[0], '200') !== FALSE;
   }
 
 }

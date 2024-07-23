@@ -141,6 +141,9 @@ class ParagraphsFilterDeleteForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Delete Selected'),
       '#button_type' => 'danger',
+      '#attributes' => [
+        'onclick' => 'if(!confirm("Are you sure you want to delete the selected paragraphs?")){return false;}',
+      ],
     ];
 
     // Add the pager.

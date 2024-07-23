@@ -91,8 +91,7 @@ class CSVProcessorPara {
     $path = $file->getFileUri();
     $real_path = $this->fileSystem->realpath($path);
 
-    $this->logger->info('Processing CSV file at @path',
-      ['@path' => $real_path]);
+    $this->logger->info('Processing CSV file at @path', ['@path' => $real_path]);
 
     $required_headers = $this->getRequiredHeaders();
 
@@ -116,8 +115,10 @@ class CSVProcessorPara {
 
         // Check for row length.
         if (count($data) != count($header)) {
-          $this->logger->warning('Skipping malformed row @row_number: @row',
-            ['@row_number' => $row_number, '@row' => print_r($data, TRUE)]);
+          $this->logger->warning('Skipping malformed row @row_number: @row', [
+            '@row_number' => $row_number,
+            '@row' => print_r($data, TRUE),
+          ]);
           $skipped++;
           $skipped_rows[] = $row_number;
           continue;
@@ -127,8 +128,10 @@ class CSVProcessorPara {
         $data = array_map(function ($item) {
           return html_entity_decode(trim($item));
         }, $data);
-        $this->logger->debug('CSV Row @row_number: @data',
-          ['@row_number' => $row_number, '@data' => print_r($data, TRUE)]);
+        $this->logger->debug('CSV Row @row_number: @data', [
+          '@row_number' => $row_number,
+          '@data' => print_r($data, TRUE),
+        ]);
         $rows[] = array_combine($header, $data);
       }
       fclose($handle);
@@ -145,27 +148,47 @@ class CSVProcessorPara {
       ];
     }
 
-    $this->logger->info('Processed CSV rows: @rows',
-      ['@rows' => print_r($rows, TRUE)]);
+    $this->logger->info('Processed CSV rows: @rows', ['@rows' => print_r($rows, TRUE)]);
 
     $section_paragraphs = [];
     foreach ($rows as $row_number => $row) {
       $image_file = $row['csv_image_url'] ?? '';
-      $title = $row['csv_target_title'] ?? '';
       $body = $row['csv_target_body'] ?? '';
 
-      // Check if at least one of the fields (Title, Image, Body) is not empty.
-      if (empty($image_file) && empty($title) && empty($body)) {
-        $this->logger->warning('Skipping row @row_number due to empty Title, Image, and Body.', ['@row_number' => $row_number]);
+      // Check if at least one of the fields (Image, Body) is not empty.
+      if (empty($image_file) && empty($body)) {
+        $this->logger->warning('Skipping row @row_number due to empty Image and Body.', [
+          '@row_number' => $row_number,
+        ]);
         $skipped++;
         $skipped_rows[] = $row_number;
         continue;
       }
 
+      // If image_url is empty, set image_alt and image_title to empty.
+      if (empty($image_file)) {
+        $image_alt = '';
+        $image_title = '';
+      }
+      else {
+        // Add a check to see if the image URL is readable.
+        if (!$this->isImageUrlValid($image_file)) {
+          $this->logger->warning('Skipping row @row_number due to invalid image URL: @url. Body content is present but skipped.', [
+            '@url' => $image_file,
+            '@row_number' => $row_number,
+          ]);
+          $skipped++;
+          $skipped_rows[] = $row_number;
+          continue;
+        }
+        $image_alt = $row['csv_image_alt'] ?? '';
+        $image_title = $row['csv_image_title'] ?? '';
+      }
+
       $child_data = [
         'pb_target_image' => $image_file,
-        'csv_image_alt' => $row['csv_image_alt'] ?? '',
-        'csv_image_title' => $row['csv_image_title'] ?? '',
+        'csv_image_alt' => $image_alt,
+        'csv_image_title' => $image_title,
         'pb_target_tag' => $row['csv_target_tag'] ?? '',
         'pb_target_body' => $body,
       ];
@@ -176,7 +199,7 @@ class CSVProcessorPara {
           'pb_content_title' => $parent_title ?? '',
           // Dynamically set the section title field based on
           // the paragraph type.
-          $section_title_field => $title,
+          $section_title_field => $row['csv_target_title'] ?? '',
           $section_entity_reference_field => [
             ['target_id' => $child_paragraph->id(), 'target_revision_id' => $child_paragraph->getRevisionId()],
           ],
@@ -190,18 +213,38 @@ class CSVProcessorPara {
           $processed++;
         }
         else {
+          if (!empty($body)) {
+            $this->logger->error('Failed to create section paragraph for row @row_number. Body content is present but the row is skipped.', [
+              '@row_number' => $row_number,
+            ]);
+          }
+          else {
+            $this->logger->error('Failed to create section paragraph for row @row_number.', [
+              '@row_number' => $row_number,
+            ]);
+          }
           $skipped++;
           $skipped_rows[] = $row_number;
         }
       }
       else {
+        if (!empty($body)) {
+          $this->logger->error('Failed to create child paragraph for row @row_number. Body content is present but the row is skipped.', [
+            '@row_number' => $row_number,
+          ]);
+        }
+        else {
+          $this->logger->error('Failed to create child paragraph for row @row_number.', [
+            '@row_number' => $row_number,
+          ]);
+        }
         $skipped++;
         $skipped_rows[] = $row_number;
       }
     }
 
     if (empty($section_paragraphs)) {
-      $error_message = 'No section paragraphs were created. Cannot create parent paragraph.';
+      $error_message = 'No section paragraphs were created. Cannot create parent paragraph. Make sure at least one row in the CSV has a valid image URL or body content.';
       $this->logger->error($error_message);
       return [
         'status' => 'error',
@@ -217,16 +260,22 @@ class CSVProcessorPara {
       $parent_entity_reference_field => $section_paragraphs,
     ];
 
-    $this->logger->info('Creating parent paragraph with data: @data',
-      ['@data' => print_r($parent_data, TRUE)]);
+    $this->logger->info('Creating parent paragraph with data: @data', ['@data' => print_r($parent_data, TRUE)]);
     $parent_paragraph = $this->paragraphCreator->createParagraph($parent_data, $folder_name, $parent_paragraph_type, $vocabulary_name, TRUE);
 
     if ($parent_paragraph) {
-      $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id',
-        ['@parent_paragraph_id' => $parent_paragraph->id()]);
+      $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id', ['@parent_paragraph_id' => $parent_paragraph->id()]);
     }
     else {
-      $this->logger->error('Failed to create the parent paragraph.');
+      $error_message = 'Failed to create the parent paragraph. Check if the section paragraphs were correctly created.';
+      $this->logger->error($error_message);
+      return [
+        'status' => 'error',
+        'message' => $error_message,
+        'processed' => $processed,
+        'skipped' => $skipped,
+        'skipped_rows' => $skipped_rows,
+      ];
     }
 
     $this->logger->info('Created parent paragraph "@parent_title" with @count sections.', [
@@ -241,6 +290,20 @@ class CSVProcessorPara {
       'skipped' => $skipped,
       'skipped_rows' => $skipped_rows,
     ];
+  }
+
+  /**
+   * Checks if the image URL is valid and readable.
+   *
+   * @param string $url
+   *   The image URL to check.
+   *
+   * @return bool
+   *   TRUE if the image URL is valid, FALSE otherwise.
+   */
+  protected function isImageUrlValid($url) {
+    $headers = @get_headers($url);
+    return $headers && strpos($headers[0], '200') !== FALSE;
   }
 
   /**
