@@ -6,3 +6,4 @@ package: Paragraphs
 dependencies:
   - pb_import:pb_import
   - paragraphs_bundles:paragraphs_bundles
+configure: pb_import_para.import_para

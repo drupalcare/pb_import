@@ -5,3 +5,4 @@ core_version_requirement: ^10 || ^11
 package: Paragraphs
 dependencies:
   - pb_import:pb_import
+configure: pb_import_node.import_node
