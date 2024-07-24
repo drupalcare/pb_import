@@ -5,7 +5,6 @@ dependencies:
     - field.field.paragraph.pb_target_bundle.pb_target_body
     - field.field.paragraph.pb_target_bundle.pb_target_image
     - field.field.paragraph.pb_target_bundle.pb_target_tag
-    - field.field.paragraph.pb_target_bundle.pb_target_title
     - image.style.thumbnail
     - paragraphs.paragraphs_type.pb_target_bundle
   module:
@@ -39,14 +38,6 @@ content:
     settings:
       match_operator: CONTAINS
       match_limit: 10
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  pb_target_title:
-    type: string_textfield
-    weight: 0
-    region: content
-    settings:
       size: 60
       placeholder: ''
     third_party_settings: {  }

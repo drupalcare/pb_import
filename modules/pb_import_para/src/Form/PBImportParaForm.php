@@ -213,11 +213,11 @@ class PBImportParaForm extends FormBase {
       '#required' => TRUE,
     ];
 
-    $form['folder_name'] = [
+    $form['image_folder_relative_path'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Folder Name'),
+      '#title' => $this->t('Image Folder Relative Path'),
       '#description' => $this->t('Enter the relative path to the image folder inside files, e.g., gallery/austin (it will be @site_path/gallery/austin)', ['@site_path' => $this->utility->getSiteSpecificPath()]),
-      '#required' => TRUE,
+      '#required' => FALSE,
     ];
 
     $form['parent_title'] = [
@@ -314,7 +314,7 @@ class PBImportParaForm extends FormBase {
     $csv_file = $form_state->getValue('csv_file');
     $parent_title = $form_state->getValue('parent_title');
     $paragraph_type = $form_state->getValue('paragraph_type');
-    $folder_name = $form_state->getValue('folder_name');
+    $image_folder_relative_path = $form_state->getValue('image_folder_relative_path');
 
     if (isset($this->paragraphTypeConfig[$paragraph_type])) {
       $config = $this->paragraphTypeConfig[$paragraph_type];
@@ -350,7 +350,7 @@ class PBImportParaForm extends FormBase {
         $section_entity_reference_field,
         $target_bundle,
         $vocabulary_name,
-        $folder_name,
+        $image_folder_relative_path,
         $section_title_field
       );
 

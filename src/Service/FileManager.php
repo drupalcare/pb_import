@@ -70,7 +70,7 @@ class FileManager {
   /**
    * Retrieves the file ID by file path and name.
    *
-   * @param string $folder_name
+   * @param string $image_folder_relative_path
    *   The folder name.
    * @param string $image_name
    *   The image name.
@@ -78,16 +78,16 @@ class FileManager {
    * @return int|null
    *   The file ID or NULL if the file does not exist.
    */
-  public function getFileId($folder_name, $image_name) {
+  public function getFileId($image_folder_relative_path, $image_name) {
     $site_specific_path = $this->utility->getSiteSpecificPath();
-    $file_path = $site_specific_path . '/' . trim($folder_name, '/') . '/' . $image_name;
+    $file_path = $site_specific_path . '/' . trim($image_folder_relative_path, '/') . '/' . $image_name;
     $real_path = $this->fileSystem->realpath($file_path);
 
     $this->logger->info('Attempting to locate file at: @file_path', ['@file_path' => $file_path]);
     $this->logger->info('Resolved real path: @real_path', ['@real_path' => $real_path]);
 
     if (file_exists($real_path)) {
-      $file_uri = 'public://' . trim($folder_name, '/') . '/' . $image_name;
+      $file_uri = 'public://' . trim($image_folder_relative_path, '/') . '/' . $image_name;
       $this->logger->info('File URI: @file_uri', ['@file_uri' => $file_uri]);
 
       $existing_files = $this->entityTypeManager->getStorage('file')->loadByProperties(['uri' => $file_uri]);

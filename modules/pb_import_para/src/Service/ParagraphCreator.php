@@ -57,7 +57,7 @@ class ParagraphCreator {
    *
    * @param array $data
    *   The data for the paragraph.
-   * @param string $folder_name
+   * @param string $image_folder_relative_path
    *   The folder name for image files.
    * @param string $paragraph_type
    *   The paragraph type.
@@ -69,7 +69,7 @@ class ParagraphCreator {
    * @return \Drupal\paragraphs\Entity\Paragraph|bool
    *   The created paragraph entity, or FALSE on failure.
    */
-  public function createParagraph(array $data, string $folder_name, string $paragraph_type, string $vocabulary_name, bool $is_parent = FALSE) {
+  public function createParagraph(array $data, string $image_folder_relative_path, string $paragraph_type, string $vocabulary_name, bool $is_parent = FALSE) {
     $paragraph_data = ['type' => $paragraph_type];
 
     foreach ($data as $field_name => $value) {
@@ -90,7 +90,7 @@ class ParagraphCreator {
 
     if (!$is_parent && !empty($data['pb_target_image'])) {
       $this->logger->info('Attempting to get file ID for image: @image', ['@image' => $data['pb_target_image']]);
-      $file_id = $this->fileManager->getFileId($folder_name, $data['pb_target_image']);
+      $file_id = $this->fileManager->getFileId($image_folder_relative_path, $data['pb_target_image']);
       if ($file_id) {
         $paragraph_data['pb_target_image'] = [
           'target_id' => $file_id,
@@ -101,7 +101,7 @@ class ParagraphCreator {
           ['@image' => $data['pb_target_image'], '@file_id' => $file_id]);
       }
       else {
-        $this->logger->warning('File not found: @file', ['@file' => $folder_name . '/' . $data['pb_target_image']]);
+        $this->logger->warning('File not found: @file', ['@file' => $image_folder_relative_path . '/' . $data['pb_target_image']]);
       }
     }
     elseif (!$is_parent) {

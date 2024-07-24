@@ -119,11 +119,11 @@ class PBImportNodeForm extends FormBase {
       '#required' => TRUE,
     ];
 
-    $form['image_folder'] = [
+    $form['image_folder_relative_path'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Image Folder'),
+      '#title' => $this->t('Image Folder Relative Path'),
       '#description' => $this->t('Enter the relative path to the image folder inside files, e.g., gallery/austin (it will be @site_path/gallery/austin)', ['@site_path' => $this->utility->getSiteSpecificPath()]),
-      '#required' => TRUE,
+      '#required' => FALSE,
     ];
 
     $form['content_type'] = [
@@ -170,7 +170,7 @@ class PBImportNodeForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $csv_file = $form_state->getValue('csv_file');
-    $folder_name = $form_state->getValue('image_folder');
+    $folder_name = $form_state->getValue('image_folder_relative_path');
     $content_type = $form_state->getValue('content_type');
     $vocabulary_name = $form_state->getValue('vocabulary_name');
 

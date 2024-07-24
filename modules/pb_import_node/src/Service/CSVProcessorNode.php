@@ -136,8 +136,8 @@ class CSVProcessorNode {
           }
         }
 
-        // Simplified condition: process row if it has a title and either
-        // image or body.
+        // Simplified condition: process row if it has a title
+        // and either image or body.
         if (!empty($data['csv_node_title']) && (!empty($data['csv_image_url']) || !empty($data['csv_node_body']))) {
           try {
             $result = $this->creator->create($data, $folder_name, $content_type, $vocabulary_name);

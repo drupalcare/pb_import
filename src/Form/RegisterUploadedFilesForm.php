@@ -110,9 +110,9 @@ class RegisterUploadedFilesForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['image_folder'] = [
+    $form['image_folder_relative_path'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Image Folder'),
+      '#title' => $this->t('Image Folder Relative Path'),
       '#description' => $this->t('Enter the relative path to the image folder inside files, e.g., gallery/austin (it will be @site_path/gallery/austin)', ['@site_path' => $this->utility->getSiteSpecificPath()]),
       '#required' => TRUE,
     ];
@@ -129,12 +129,12 @@ class RegisterUploadedFilesForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $folder_name = trim($form_state->getValue('image_folder'));
-    if (empty($folder_name)) {
-      $form_state->setErrorByName('image_folder', $this->t('The image folder path cannot be empty.'));
+    $image_folder_relative_path = trim($form_state->getValue('image_folder_relative_path'));
+    if (empty($image_folder_relative_path)) {
+      $form_state->setErrorByName('image_folder_relative_path', $this->t('The image folder path cannot be empty.'));
     }
-    elseif (!preg_match('/^[a-zA-Z0-9-_\/]+$/', $folder_name)) {
-      $form_state->setErrorByName('image_folder', $this->t('The image folder path contains invalid characters.'));
+    elseif (!preg_match('/^[a-zA-Z0-9-_\/]+$/', $image_folder_relative_path)) {
+      $form_state->setErrorByName('image_folder_relative_path', $this->t('The image folder path contains invalid characters.'));
     }
   }
 
@@ -142,11 +142,11 @@ class RegisterUploadedFilesForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $folder_name = rtrim($form_state->getValue('image_folder'), '/');
-    $this->logger->info('Relative directory: @relative_directory', ['@relative_directory' => $folder_name]);
+    $image_folder_relative_path = rtrim($form_state->getValue('image_folder_relative_path'), '/');
+    $this->logger->info('Relative directory: @relative_directory', ['@relative_directory' => $image_folder_relative_path]);
 
     // Scan the directory and register files.
-    $this->fileRegistrar->registerFiles($folder_name);
+    $this->fileRegistrar->registerFiles($image_folder_relative_path);
   }
 
 }

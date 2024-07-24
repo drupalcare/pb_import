@@ -5,7 +5,6 @@ dependencies:
     - field.field.paragraph.pb_target_bundle.pb_target_body
     - field.field.paragraph.pb_target_bundle.pb_target_image
     - field.field.paragraph.pb_target_bundle.pb_target_tag
-    - field.field.paragraph.pb_target_bundle.pb_target_title
     - paragraphs.paragraphs_type.pb_target_bundle
   module:
     - image
@@ -40,13 +39,5 @@ content:
       link: true
     third_party_settings: {  }
     weight: 3
-    region: content
-  pb_target_title:
-    type: string
-    label: hidden
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    weight: 0
     region: content
 hidden: {  }

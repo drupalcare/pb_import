@@ -75,7 +75,7 @@ class CSVProcessorPara {
    *   The target bundle.
    * @param string $vocabulary_name
    *   The vocabulary name.
-   * @param string $folder_name
+   * @param string $image_folder_relative_path
    *   The folder name for image files.
    * @param string $section_title_field
    *   The title field of the section paragraph.
@@ -83,7 +83,7 @@ class CSVProcessorPara {
    * @return array
    *   The result of the CSV processing.
    */
-  public function process(File $file, string $parent_title, string $parent_paragraph_type, string $parent_entity_reference_field, string $section_paragraph_type, string $section_entity_reference_field, string $target_bundle, string $vocabulary_name, string $folder_name, string $section_title_field) {
+  public function process(File $file, string $parent_title, string $parent_paragraph_type, string $parent_entity_reference_field, string $section_paragraph_type, string $section_entity_reference_field, string $target_bundle, string $vocabulary_name, string $image_folder_relative_path, string $section_title_field) {
     $processed = 0;
     $skipped = 0;
     $skipped_rows = [];
@@ -192,7 +192,7 @@ class CSVProcessorPara {
         'pb_target_tag' => $row['csv_target_tag'] ?? '',
         'pb_target_body' => $body,
       ];
-      $child_paragraph = $this->paragraphCreator->createParagraph($child_data, $folder_name, $target_bundle, $vocabulary_name);
+      $child_paragraph = $this->paragraphCreator->createParagraph($child_data, $image_folder_relative_path, $target_bundle, $vocabulary_name);
       if ($child_paragraph) {
         $section_data = [
           // Always use the parent title from the form.
@@ -204,7 +204,7 @@ class CSVProcessorPara {
             ['target_id' => $child_paragraph->id(), 'target_revision_id' => $child_paragraph->getRevisionId()],
           ],
         ];
-        $section_paragraph = $this->paragraphCreator->createParagraph($section_data, $folder_name, $section_paragraph_type, $vocabulary_name);
+        $section_paragraph = $this->paragraphCreator->createParagraph($section_data, $image_folder_relative_path, $section_paragraph_type, $vocabulary_name);
         if ($section_paragraph) {
           $section_paragraphs[] = [
             'target_id' => $section_paragraph->id(),
@@ -261,7 +261,7 @@ class CSVProcessorPara {
     ];
 
     $this->logger->info('Creating parent paragraph with data: @data', ['@data' => print_r($parent_data, TRUE)]);
-    $parent_paragraph = $this->paragraphCreator->createParagraph($parent_data, $folder_name, $parent_paragraph_type, $vocabulary_name, TRUE);
+    $parent_paragraph = $this->paragraphCreator->createParagraph($parent_data, $image_folder_relative_path, $parent_paragraph_type, $vocabulary_name, TRUE);
 
     if ($parent_paragraph) {
       $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id', ['@parent_paragraph_id' => $parent_paragraph->id()]);
