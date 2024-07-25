@@ -172,7 +172,7 @@ class CSVProcessorPara {
       }
       else {
         // Add a check to see if the image URL is readable.
-        if (!$this->isImageUrlValid($image_file)) {
+        if (!$this->isImageUrlValid($image_file, $image_folder_relative_path)) {
           $this->logger->warning('Skipping row @row_number due to invalid image URL: @url. Body content is present but skipped.', [
             '@url' => $image_file,
             '@row_number' => $row_number,
@@ -293,17 +293,28 @@ class CSVProcessorPara {
   }
 
   /**
-   * Checks if the image URL is valid and readable.
+   * Checks if the image URL points to a valid file in the specified folder.
    *
    * @param string $url
-   *   The image URL to check.
+   *   The image URL (file name) to check.
+   * @param string $folder
+   *   The folder where the image files are stored.
    *
    * @return bool
-   *   TRUE if the image URL is valid, FALSE otherwise.
+   *   TRUE if the image file exists in the folder, FALSE otherwise.
    */
-  protected function isImageUrlValid($url) {
-    $headers = @get_headers($url);
-    return $headers && strpos($headers[0], '200') !== FALSE;
+  protected function isImageUrlValid(string $url, string $folder) : bool {
+    // Ensure the folder path ends with a slash.
+    $folder = rtrim($folder, '/') . '/';
+    $file_path = $this->fileSystem->realpath('public://' . $folder . $url);
+
+    if (file_exists($file_path)) {
+      return TRUE;
+    }
+    else {
+      $this->logger->warning('File does not exist: @file_path', ['@file_path' => $file_path]);
+      return FALSE;
+    }
   }
 
   /**
@@ -315,7 +326,7 @@ class CSVProcessorPara {
    * @return bool
    *   TRUE if the file extension is allowed, FALSE otherwise.
    */
-  protected function validateFileExtension($file) {
+  protected function validateFileExtension(string $file) {
     $extension = pathinfo($file, PATHINFO_EXTENSION);
     return in_array(strtolower($extension), $this->allowedExtensions);
   }

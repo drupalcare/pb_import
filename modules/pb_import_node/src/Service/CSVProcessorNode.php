@@ -117,7 +117,7 @@ class CSVProcessorNode {
         }
         else {
           // Add a check to see if the image URL is readable.
-          if (!$this->isImageUrlValid($data['csv_image_url'])) {
+          if (!$this->isImageUrlValid($data['csv_image_url'], $folder_name)) {
             if (!empty($data['csv_node_body'])) {
               $this->logger->error('Skipping row @row_number due to invalid image URL: @url. The body content is present but the row is skipped.', [
                 '@url' => $data['csv_image_url'],
@@ -260,17 +260,28 @@ class CSVProcessorNode {
   }
 
   /**
-   * Checks if the image URL is valid and readable.
+   * Checks if the image URL points to a valid file in the specified folder.
    *
    * @param string $url
-   *   The image URL to check.
+   *   The image URL (file name) to check.
+   * @param string $folder
+   *   The folder where the image files are stored.
    *
    * @return bool
-   *   TRUE if the image URL is valid, FALSE otherwise.
+   *   TRUE if the image file exists in the folder, FALSE otherwise.
    */
-  protected function isImageUrlValid($url) {
-    $headers = @get_headers($url);
-    return $headers && strpos($headers[0], '200') !== FALSE;
+  protected function isImageUrlValid(string $url, string $folder) : bool {
+    // Ensure the folder path ends with a slash.
+    $folder = rtrim($folder, '/') . '/';
+    $file_path = $this->fileSystem->realpath('public://' . $folder . $url);
+
+    if (file_exists($file_path)) {
+      return TRUE;
+    }
+    else {
+      $this->logger->warning('File does not exist: @file_path', ['@file_path' => $file_path]);
+      return FALSE;
+    }
   }
 
 }
