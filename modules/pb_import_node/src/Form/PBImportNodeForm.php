@@ -129,7 +129,7 @@ class PBImportNodeForm extends FormBase {
     $form['content_type'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Content Type'),
-      '#description' => $this->t('Enter the content type to override the default.'),
+      '#description' => $this->t('pb_import_node is the content type created to import CSV content. If you want to use a different content type, ensure it has the same field names as pb_import_node.'),
       '#default_value' => 'pb_import_node',
       '#required' => TRUE,
     ];
@@ -137,7 +137,7 @@ class PBImportNodeForm extends FormBase {
     $form['vocabulary_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Vocabulary Name'),
-      '#description' => $this->t('Enter the vocabulary name to override the default.'),
+      '#description' => $this->t('pb_import_node is the vocabulary assigned to this content type. You can change it by entering the machine name for the new vocabulary here.'),
       '#default_value' => 'pb_import_node',
       '#required' => TRUE,
     ];
