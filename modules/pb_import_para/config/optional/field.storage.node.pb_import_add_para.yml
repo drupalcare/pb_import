@@ -5,8 +5,8 @@ dependencies:
     - entity_reference_revisions
     - node
     - paragraphs
-id: node.pb_add_para
-field_name: pb_add_para
+id: node.pb_import_add_para
+field_name: pb_import_add_para
 entity_type: node
 type: entity_reference_revisions
 settings:

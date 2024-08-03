@@ -2,7 +2,7 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.node.pb_import_para.pb_add_para
+    - field.field.node.pb_import_para.pb_import_add_para
     - field.field.node.pb_import_para.pb_import_para_reference
     - node.type.pb_import_para
   module:
@@ -19,7 +19,7 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  pb_add_para:
+  pb_import_add_para:
     type: paragraphs
     weight: 1
     region: content
