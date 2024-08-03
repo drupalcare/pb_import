@@ -1,0 +1,40 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.pb_add_para
+    - node.type.pb_import_para
+  module:
+    - entity_reference_revisions
+id: node.pb_import_para.pb_add_para
+field_name: pb_add_para
+entity_type: node
+bundle: pb_import_para
+label: 'Add Paragraph'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    target_bundles: null
+    negate: 0
+    target_bundles_drag_drop:
+      image_bundle:
+        weight: 6
+        enabled: false
+      image_narrow_bundle:
+        weight: 7
+        enabled: false
+      image_wide_bundle:
+        weight: 8
+        enabled: false
+      pb_target_bundle:
+        weight: 9
+        enabled: false
+      simple_bundle:
+        weight: 10
+        enabled: false
+field_type: entity_reference_revisions
