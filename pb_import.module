@@ -6,46 +6,47 @@
  *
  * Filename:     pb_import.module
  * Website:      https://www.flashwebcenter.com
- * Description:  template.
+ * Description:  Core module for importing paragraphs and nodes from CSV.
  * Developer:    Alaa Haddad https://www.alaahaddad.com.
  */
+
+declare(strict_types=1);
 
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
  * Implements hook_help().
  */
-function pb_import_help($route_name, RouteMatchInterface $route_match) {
-  if ($route_name === 'help.page.paragraphs_bundles') {
-    return _pb_import_helper_render_readme();
+function pb_import_help(string $route_name, RouteMatchInterface $route_match): ?string {
+  if ($route_name === 'help.page.pb_import') {
+    $readme_file = __DIR__ . '/README.md';
+    if (file_exists($readme_file)) {
+      $text = file_get_contents($readme_file);
+      if ($text === FALSE) {
+        return NULL;
+      }
+
+      if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
+        return '<pre>' . htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
+      }
+
+      // Use the Markdown filter to render the README.
+      $filter_manager = \Drupal::service('plugin.manager.filter');
+      $settings = \Drupal::configFactory()
+        ->get('markdown.settings')
+        ->getRawData();
+      $config = ['settings' => $settings];
+      $filter = $filter_manager->createInstance('markdown', $config);
+      return $filter->process($text, 'en');
+    }
   }
   return NULL;
 }
 
 /**
- * Helper function to render README.md.
- */
-function _pb_import_helper_render_readme() {
-  $text = file_get_contents(__DIR__ . "/README.md");
-
-  if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
-    return '<pre>' . $text . '</pre>';
-  }
-
-  // Use the Markdown filter to render the README.
-  $filter_manager = \Drupal::service('plugin.manager.filter');
-  $settings = \Drupal::configFactory()
-    ->get('markdown.settings')
-    ->getRawData();
-  $config = ['settings' => $settings];
-  $filter = $filter_manager->createInstance('markdown', $config);
-  return $filter->process($text, 'en');
-}
-
-/**
  * Implements hook_form_FORM_ID_alter().
  */
-function pb_import_form_paragraph_form_alter(&$form, &$form_state, $form_id) {
+function pb_import_form_paragraph_form_alter(array &$form, $form_state, string $form_id): void {
   // Add a custom submit handler to redirect after saving.
   $form['actions']['submit']['#submit'][] = 'pb_import_paragraph_form_submit';
 }
@@ -53,11 +54,10 @@ function pb_import_form_paragraph_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Custom submit handler for the paragraph form.
  */
-function pb_import_paragraph_form_submit($form, &$form_state) {
-  // Get the paragraph entity from the form state.
+function pb_import_paragraph_form_submit(array $form, $form_state): void {
   $paragraph = $form_state->getFormObject()->getEntity();
-  // Set a message to inform the user that the paragraph has been saved.
-  \Drupal::messenger()->addMessage(t('The paragraph %label has been saved.', ['%label' => $paragraph->label()]));
-  // Redirect to the paragraphs list page.
+  \Drupal::messenger()->addMessage(t('The paragraph %label has been saved.', [
+    '%label' => $paragraph->label(),
+  ]));
   $form_state->setRedirect('pb_import.paragraphs_list');
 }

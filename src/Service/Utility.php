@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\pb_import\Service;
 
 /**
@@ -8,14 +10,23 @@ namespace Drupal\pb_import\Service;
 class Utility {
 
   /**
+   * Constructs a Utility object.
+   *
+   * @param string $sitePath
+   *   The site path from container parameter.
+   */
+  public function __construct(
+    private readonly string $sitePath,
+  ) {}
+
+  /**
    * Gets the site-specific files directory path.
    *
    * @return string
    *   The site-specific files directory path.
    */
-  public function getSiteSpecificPath() {
-    $site_path = \Drupal::getContainer()->getParameter('site.path');
-    $site_name = basename($site_path);
+  public function getSiteSpecificPath(): string {
+    $site_name = basename($this->sitePath);
     return 'sites/' . $site_name . '/files';
   }
 

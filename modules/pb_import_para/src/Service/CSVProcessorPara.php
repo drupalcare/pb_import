@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\pb_import_para\Service;
 
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
+use Drupal\paragraphs\ParagraphInterface;
 
 /**
  * Service to process CSV files for importing paragraphs.
@@ -13,151 +15,214 @@ use Drupal\file\Entity\File;
 class CSVProcessorPara {
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
+   * Required CSV headers.
    */
-  protected FileSystemInterface $fileSystem;
+  private const REQUIRED_HEADERS = [
+    'csv_image_url',
+    'csv_image_alt',
+    'csv_image_title',
+    'csv_target_title',
+    'csv_target_tag',
+    'csv_target_body',
+  ];
 
   /**
-   * The logger channel.
+   * Constructs a CSVProcessorPara object.
    *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
-
-  /**
-   * The paragraph creator service.
-   *
-   * @var \Drupal\pb_import_para\Service\ParagraphCreator
-   */
-  protected ParagraphCreator $paragraphCreator;
-
-  /**
-   * Allowed file extensions.
-   *
-   * @var array
-   */
-  protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
-  /**
-   * CSVProcessorPara constructor.
-   *
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger channel factory.
-   * @param \Drupal\pb_import_para\Service\ParagraphCreator $paragraph_creator
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger channel.
+   * @param \Drupal\pb_import_para\Service\ParagraphCreator $paragraphCreator
    *   The paragraph creator service.
    */
-  public function __construct(FileSystemInterface $file_system, LoggerChannelFactoryInterface $logger_factory, ParagraphCreator $paragraph_creator) {
-    $this->fileSystem = $file_system;
-    $this->logger = $logger_factory->get('pb_import_para');
-    $this->paragraphCreator = $paragraph_creator;
-  }
+  public function __construct(
+    private readonly FileSystemInterface $fileSystem,
+    private readonly LoggerChannelInterface $logger,
+    private readonly ParagraphCreator $paragraphCreator,
+  ) {}
 
   /**
    * Processes the CSV file.
    *
-   * @param \Drupal\file\Entity\File $file
+   * @param \Drupal\file\FileInterface $file
    *   The file entity.
-   * @param string $parent_title
+   * @param string $parentTitle
    *   The title for the parent paragraph.
-   * @param string $parent_paragraph_type
+   * @param string $parentParagraphType
    *   The type of the parent paragraph.
-   * @param string $parent_entity_reference_field
+   * @param string $parentEntityReferenceField
    *   The entity reference field of the parent paragraph.
-   * @param string $section_paragraph_type
+   * @param string $sectionParagraphType
    *   The type of the section paragraph.
-   * @param string $section_entity_reference_field
+   * @param string $sectionEntityReferenceField
    *   The entity reference field of the section paragraph.
-   * @param string $target_bundle
+   * @param string $targetBundle
    *   The target bundle.
-   * @param string $vocabulary_name
+   * @param string $vocabularyName
    *   The vocabulary name.
-   * @param string $image_folder_relative_path
+   * @param string $imageFolderRelativePath
    *   The folder name for image files.
-   * @param string $section_title_field
+   * @param string $sectionTitleField
    *   The title field of the section paragraph.
    *
    * @return array
-   *   The result of the CSV processing.
+   *   The result of the CSV processing with keys:
+   *   - status: 'success' or 'error'
+   *   - message: Status message
+   *   - processed: Number of rows processed
+   *   - skipped: Number of rows skipped
+   *   - skipped_rows: Array of skipped row numbers
    */
-  public function process(File $file, string $parent_title, string $parent_paragraph_type, string $parent_entity_reference_field, string $section_paragraph_type, string $section_entity_reference_field, string $target_bundle, string $vocabulary_name, string $image_folder_relative_path, string $section_title_field) {
-    $processed = 0;
-    $skipped = 0;
-    $skipped_rows = [];
+  public function process(
+    FileInterface $file,
+    string $parentTitle,
+    string $parentParagraphType,
+    string $parentEntityReferenceField,
+    string $sectionParagraphType,
+    string $sectionEntityReferenceField,
+    string $targetBundle,
+    string $vocabularyName,
+    string $imageFolderRelativePath,
+    string $sectionTitleField,
+  ): array {
+    $real_path = $this->fileSystem->realpath($file->getFileUri());
 
-    $path = $file->getFileUri();
-    $real_path = $this->fileSystem->realpath($path);
+    if ($real_path === FALSE) {
+      return $this->errorResult('Failed to resolve file path.');
+    }
 
     $this->logger->info('Processing CSV file at @path', ['@path' => $real_path]);
 
-    $required_headers = $this->getRequiredHeaders();
+    $parse_result = $this->parseCsv($real_path);
+
+    if ($parse_result['status'] === 'error') {
+      return $parse_result;
+    }
+
+    return $this->processRows(
+      $parse_result['rows'],
+      $parentTitle,
+      $parentParagraphType,
+      $parentEntityReferenceField,
+      $sectionParagraphType,
+      $sectionEntityReferenceField,
+      $targetBundle,
+      $vocabularyName,
+      $imageFolderRelativePath,
+      $sectionTitleField
+    );
+  }
+
+  /**
+   * Parses CSV file and returns rows.
+   *
+   * @param string $filePath
+   *   The file path.
+   *
+   * @return array
+   *   Array with 'status', 'rows', and optionally 'message'.
+   */
+  private function parseCsv(string $filePath): array {
+    $handle = fopen($filePath, 'r');
+
+    if ($handle === FALSE) {
+      return $this->errorResult('Failed to open CSV file at ' . $filePath);
+    }
+
+    $header = fgetcsv($handle, 0, ',');
+
+    if ($header === FALSE) {
+      fclose($handle);
+      return $this->errorResult('Failed to read CSV header.');
+    }
+
+    $header = array_map('trim', $header);
+
+    $validation_result = $this->validateHeaders($header);
+    if ($validation_result['status'] === 'error') {
+      fclose($handle);
+      return $validation_result;
+    }
 
     $rows = [];
-    if (($handle = fopen($real_path, 'r')) !== FALSE) {
-      $header = fgetcsv($handle, 1000, ',');
-      // Trim whitespace from headers.
-      $header = array_map('trim', $header);
-      $this->logger->debug('CSV Header: @header', ['@header' => print_r($header, TRUE)]);
+    $row_number = 1;
 
-      // Validate headers.
-      $validation_result = $this->validateHeaders($header, $required_headers);
-      if ($validation_result['status'] === 'error') {
-        return $validation_result;
-      }
+    while (($data = fgetcsv($handle, 0, ',')) !== FALSE) {
+      $row_number++;
 
-      // Initialize row number starting from the first data row.
-      $row_number = 1;
-      while (($data = fgetcsv($handle, 1000, ',')) !== FALSE) {
-        $row_number++;
-
-        // Check for row length.
-        if (count($data) != count($header)) {
-          $this->logger->warning('Skipping malformed row @row_number: @row', [
-            '@row_number' => $row_number,
-            '@row' => print_r($data, TRUE),
-          ]);
-          $skipped++;
-          $skipped_rows[] = $row_number;
-          continue;
-        }
-
-        // Trim whitespace from values and decode HTML entities.
-        $data = array_map(function ($item) {
-          return html_entity_decode(trim($item));
-        }, $data);
-        $this->logger->debug('CSV Row @row_number: @data', [
+      if (count($data) !== count($header)) {
+        $this->logger->warning('Skipping malformed row @row_number', [
           '@row_number' => $row_number,
-          '@data' => print_r($data, TRUE),
         ]);
-        $rows[] = array_combine($header, $data);
+        continue;
       }
-      fclose($handle);
-    }
-    else {
-      $error_message = 'Failed to open CSV file at @path';
-      $this->logger->error($error_message, ['@path' => $real_path]);
-      return [
-        'status' => 'error',
-        'message' => $error_message,
-        'processed' => $processed,
-        'skipped' => $skipped,
-        'skipped_rows' => $skipped_rows,
-      ];
+
+      // Only trim - do NOT use html_entity_decode (XSS risk).
+      $data = array_map('trim', $data);
+      $rows[] = array_combine($header, $data);
     }
 
-    $this->logger->info('Processed CSV rows: @rows', ['@rows' => print_r($rows, TRUE)]);
+    fclose($handle);
 
+    return [
+      'status' => 'success',
+      'rows' => $rows,
+    ];
+  }
+
+  /**
+   * Processes CSV rows and creates paragraphs.
+   *
+   * @param array $rows
+   *   CSV rows.
+   * @param string $parentTitle
+   *   Parent title.
+   * @param string $parentParagraphType
+   *   Parent paragraph type.
+   * @param string $parentEntityReferenceField
+   *   Parent entity reference field.
+   * @param string $sectionParagraphType
+   *   Section paragraph type.
+   * @param string $sectionEntityReferenceField
+   *   Section entity reference field.
+   * @param string $targetBundle
+   *   Target bundle.
+   * @param string $vocabularyName
+   *   Vocabulary name.
+   * @param string $imageFolderRelativePath
+   *   Image folder path.
+   * @param string $sectionTitleField
+   *   Section title field.
+   *
+   * @return array
+   *   Processing result.
+   */
+  private function processRows(
+    array $rows,
+    string $parentTitle,
+    string $parentParagraphType,
+    string $parentEntityReferenceField,
+    string $sectionParagraphType,
+    string $sectionEntityReferenceField,
+    string $targetBundle,
+    string $vocabularyName,
+    string $imageFolderRelativePath,
+    string $sectionTitleField,
+  ): array {
+    $processed = 0;
+    $skipped = 0;
+    $skipped_rows = [];
     $section_paragraphs = [];
-    foreach ($rows as $row_number => $row) {
+
+    foreach ($rows as $index => $row) {
+      $row_number = $index + 2;
+
       $image_file = $row['csv_image_url'] ?? '';
       $body = $row['csv_target_body'] ?? '';
 
-      // Check if at least one of the fields (Image, Body) is not empty.
-      if (empty($image_file) && empty($body)) {
-        $this->logger->warning('Skipping row @row_number due to empty Image and Body.', [
+      if ($image_file === '' && $body === '') {
+        $this->logger->warning('Skipping row @row_number: both image and body are empty.', [
           '@row_number' => $row_number,
         ]);
         $skipped++;
@@ -165,121 +230,72 @@ class CSVProcessorPara {
         continue;
       }
 
-      // If image_url is empty, set image_alt and image_title to empty.
-      if (empty($image_file)) {
-        $image_alt = '';
-        $image_title = '';
-      }
-      else {
-        // Add a check to see if the image URL is readable.
-        if (!$this->isImageUrlValid($image_file, $image_folder_relative_path)) {
-          $this->logger->warning('Skipping row @row_number due to invalid image URL: @url. Body content is present but skipped.', [
-            '@url' => $image_file,
-            '@row_number' => $row_number,
-          ]);
-          $skipped++;
-          $skipped_rows[] = $row_number;
-          continue;
-        }
-        $image_alt = $row['csv_image_alt'] ?? '';
-        $image_title = $row['csv_image_title'] ?? '';
+      if ($image_file !== '' && !$this->isImageUrlValid($image_file, $imageFolderRelativePath)) {
+        $this->logger->warning('Skipping row @row_number: invalid image URL @url', [
+          '@row_number' => $row_number,
+          '@url' => $image_file,
+        ]);
+        $skipped++;
+        $skipped_rows[] = $row_number;
+        continue;
       }
 
-      $child_data = [
-        'pb_target_image' => $image_file,
-        'csv_image_alt' => $image_alt,
-        'csv_image_title' => $image_title,
-        'pb_target_tag' => $row['csv_target_tag'] ?? '',
-        'pb_target_body' => $body,
-      ];
-      $child_paragraph = $this->paragraphCreator->createParagraph($child_data, $image_folder_relative_path, $target_bundle, $vocabulary_name);
-      if ($child_paragraph) {
-        $section_data = [
-          // Always use the parent title from the form.
-          'pb_content_title' => $parent_title ?? '',
-          // Dynamically set the section title field based on
-          // the paragraph type.
-          $section_title_field => $row['csv_target_title'] ?? '',
-          $section_entity_reference_field => [
-            ['target_id' => $child_paragraph->id(), 'target_revision_id' => $child_paragraph->getRevisionId()],
-          ],
+      $section_paragraph = $this->createSectionParagraph(
+        $row,
+        $parentTitle,
+        $sectionParagraphType,
+        $sectionEntityReferenceField,
+        $targetBundle,
+        $vocabularyName,
+        $imageFolderRelativePath,
+        $sectionTitleField
+      );
+
+      if ($section_paragraph instanceof ParagraphInterface) {
+        $section_paragraphs[] = [
+          'target_id' => $section_paragraph->id(),
+          'target_revision_id' => $section_paragraph->getRevisionId(),
         ];
-        $section_paragraph = $this->paragraphCreator->createParagraph($section_data, $image_folder_relative_path, $section_paragraph_type, $vocabulary_name);
-        if ($section_paragraph) {
-          $section_paragraphs[] = [
-            'target_id' => $section_paragraph->id(),
-            'target_revision_id' => $section_paragraph->getRevisionId(),
-          ];
-          $processed++;
-        }
-        else {
-          if (!empty($body)) {
-            $this->logger->error('Failed to create section paragraph for row @row_number. Body content is present but the row is skipped.', [
-              '@row_number' => $row_number,
-            ]);
-          }
-          else {
-            $this->logger->error('Failed to create section paragraph for row @row_number.', [
-              '@row_number' => $row_number,
-            ]);
-          }
-          $skipped++;
-          $skipped_rows[] = $row_number;
-        }
+        $processed++;
       }
       else {
-        if (!empty($body)) {
-          $this->logger->error('Failed to create child paragraph for row @row_number. Body content is present but the row is skipped.', [
-            '@row_number' => $row_number,
-          ]);
-        }
-        else {
-          $this->logger->error('Failed to create child paragraph for row @row_number.', [
-            '@row_number' => $row_number,
-          ]);
-        }
+        $this->logger->error('Failed to create section paragraph for row @row_number', [
+          '@row_number' => $row_number,
+        ]);
         $skipped++;
         $skipped_rows[] = $row_number;
       }
     }
 
     if (empty($section_paragraphs)) {
-      $error_message = 'No section paragraphs were created. Cannot create parent paragraph. Make sure at least one row in the CSV has a valid image URL or body content.';
-      $this->logger->error($error_message);
-      return [
-        'status' => 'error',
-        'message' => $error_message,
-        'processed' => $processed,
-        'skipped' => $skipped,
-        'skipped_rows' => $skipped_rows,
-      ];
+      return $this->errorResult(
+        'No section paragraphs were created. Ensure at least one row has valid image or body content.',
+        $processed,
+        $skipped,
+        $skipped_rows
+      );
     }
 
-    $parent_data = [
-      'pb_content_title' => $parent_title ?? '',
-      $parent_entity_reference_field => $section_paragraphs,
-    ];
+    $parent_paragraph = $this->createParentParagraph(
+      $parentTitle,
+      $parentParagraphType,
+      $parentEntityReferenceField,
+      $section_paragraphs,
+      $imageFolderRelativePath,
+      $vocabularyName
+    );
 
-    $this->logger->info('Creating parent paragraph with data: @data', ['@data' => print_r($parent_data, TRUE)]);
-    $parent_paragraph = $this->paragraphCreator->createParagraph($parent_data, $image_folder_relative_path, $parent_paragraph_type, $vocabulary_name, TRUE);
-
-    if ($parent_paragraph) {
-      $this->logger->info('Parent paragraph created successfully with ID: @parent_paragraph_id', ['@parent_paragraph_id' => $parent_paragraph->id()]);
-    }
-    else {
-      $error_message = 'Failed to create the parent paragraph. Check if the section paragraphs were correctly created.';
-      $this->logger->error($error_message);
-      return [
-        'status' => 'error',
-        'message' => $error_message,
-        'processed' => $processed,
-        'skipped' => $skipped,
-        'skipped_rows' => $skipped_rows,
-      ];
+    if (!$parent_paragraph instanceof ParagraphInterface) {
+      return $this->errorResult(
+        'Failed to create parent paragraph.',
+        $processed,
+        $skipped,
+        $skipped_rows
+      );
     }
 
-    $this->logger->info('Created parent paragraph "@parent_title" with @count sections.', [
-      '@parent_title' => $parent_title,
+    $this->logger->info('Created parent paragraph "@title" with @count sections.', [
+      '@title' => $parentTitle,
       '@count' => count($section_paragraphs),
     ]);
 
@@ -293,89 +309,204 @@ class CSVProcessorPara {
   }
 
   /**
-   * Checks if the image URL points to a valid file in the specified folder.
+   * Creates a section paragraph.
+   *
+   * @param array $row
+   *   CSV row data.
+   * @param string $parentTitle
+   *   Parent title.
+   * @param string $sectionParagraphType
+   *   Section type.
+   * @param string $sectionEntityReferenceField
+   *   Section reference field.
+   * @param string $targetBundle
+   *   Target bundle.
+   * @param string $vocabularyName
+   *   Vocabulary name.
+   * @param string $imageFolderRelativePath
+   *   Image folder path.
+   * @param string $sectionTitleField
+   *   Section title field.
+   *
+   * @return \Drupal\paragraphs\ParagraphInterface|null
+   *   Created paragraph or NULL.
+   */
+  private function createSectionParagraph(
+    array $row,
+    string $parentTitle,
+    string $sectionParagraphType,
+    string $sectionEntityReferenceField,
+    string $targetBundle,
+    string $vocabularyName,
+    string $imageFolderRelativePath,
+    string $sectionTitleField,
+  ): ?ParagraphInterface {
+    $image_file = $row['csv_image_url'] ?? '';
+    $image_alt = $image_file === '' ? '' : ($row['csv_image_alt'] ?? '');
+    $image_title = $image_file === '' ? '' : ($row['csv_image_title'] ?? '');
+
+    $child_data = [
+      'pb_target_image' => $image_file,
+      'csv_image_alt' => $image_alt,
+      'csv_image_title' => $image_title,
+      'pb_target_tag' => $row['csv_target_tag'] ?? '',
+      'pb_target_body' => $row['csv_target_body'] ?? '',
+    ];
+
+    $child_paragraph = $this->paragraphCreator->createParagraph(
+      $child_data,
+      $imageFolderRelativePath,
+      $targetBundle,
+      $vocabularyName
+    );
+
+    if (!$child_paragraph instanceof ParagraphInterface) {
+      return NULL;
+    }
+
+    $section_data = [
+      'pb_content_title' => $parentTitle,
+      $sectionTitleField => $row['csv_target_title'] ?? '',
+      $sectionEntityReferenceField => [
+        [
+          'target_id' => $child_paragraph->id(),
+          'target_revision_id' => $child_paragraph->getRevisionId(),
+        ],
+      ],
+    ];
+
+    return $this->paragraphCreator->createParagraph(
+      $section_data,
+      $imageFolderRelativePath,
+      $sectionParagraphType,
+      $vocabularyName
+    );
+  }
+
+  /**
+   * Creates parent paragraph.
+   *
+   * @param string $parentTitle
+   *   Parent title.
+   * @param string $parentParagraphType
+   *   Parent type.
+   * @param string $parentEntityReferenceField
+   *   Parent reference field.
+   * @param array $sectionParagraphs
+   *   Section paragraphs.
+   * @param string $imageFolderRelativePath
+   *   Image folder path.
+   * @param string $vocabularyName
+   *   Vocabulary name.
+   *
+   * @return \Drupal\paragraphs\ParagraphInterface|null
+   *   Created paragraph or NULL.
+   */
+  private function createParentParagraph(
+    string $parentTitle,
+    string $parentParagraphType,
+    string $parentEntityReferenceField,
+    array $sectionParagraphs,
+    string $imageFolderRelativePath,
+    string $vocabularyName,
+  ): ?ParagraphInterface {
+    $parent_data = [
+      'pb_content_title' => $parentTitle,
+      $parentEntityReferenceField => $sectionParagraphs,
+    ];
+
+    return $this->paragraphCreator->createParagraph(
+      $parent_data,
+      $imageFolderRelativePath,
+      $parentParagraphType,
+      $vocabularyName,
+      TRUE
+    );
+  }
+
+  /**
+   * Validates image URL.
    *
    * @param string $url
-   *   The image URL (file name) to check.
+   *   Image filename.
    * @param string $folder
-   *   The folder where the image files are stored.
+   *   Folder path.
    *
    * @return bool
-   *   TRUE if the image file exists in the folder, FALSE otherwise.
+   *   TRUE if valid.
    */
-  protected function isImageUrlValid(string $url, string $folder) : bool {
-    // Ensure the folder path ends with a slash.
+  private function isImageUrlValid(string $url, string $folder): bool {
     $folder = rtrim($folder, '/') . '/';
-    $file_path = $this->fileSystem->realpath('public://' . $folder . $url);
+    $file_uri = 'public://' . $folder . $url;
+    $file_path = $this->fileSystem->realpath($file_uri);
 
-    if (file_exists($file_path)) {
-      return TRUE;
-    }
-    else {
-      $this->logger->warning('File does not exist: @file_path', ['@file_path' => $file_path]);
+    if ($file_path === FALSE || !file_exists($file_path)) {
+      $this->logger->warning('File does not exist: @file_uri', [
+        '@file_uri' => $file_uri,
+      ]);
       return FALSE;
     }
+
+    return TRUE;
   }
 
   /**
-   * Validates the file extension.
-   *
-   * @param string $file
-   *   The file name.
-   *
-   * @return bool
-   *   TRUE if the file extension is allowed, FALSE otherwise.
-   */
-  protected function validateFileExtension(string $file) {
-    $extension = pathinfo($file, PATHINFO_EXTENSION);
-    return in_array(strtolower($extension), $this->allowedExtensions);
-  }
-
-  /**
-   * Returns the required headers for the CSV file.
-   *
-   * @return array
-   *   The required headers.
-   */
-  protected function getRequiredHeaders() {
-    return [
-      'csv_image_url',
-      'csv_image_alt',
-      'csv_image_title',
-      'csv_target_title',
-      'csv_target_tag',
-      'csv_target_body',
-    ];
-  }
-
-  /**
-   * Validates the CSV headers.
+   * Validates CSV headers.
    *
    * @param array $header
-   *   The CSV headers.
-   * @param array $required_headers
-   *   The required headers.
+   *   CSV headers.
    *
    * @return array
-   *   The validation result.
+   *   Validation result.
    */
-  protected function validateHeaders(array $header, array $required_headers) {
-    $missing_headers = array_diff($required_headers, $header);
-    $extra_headers = array_diff($header, $required_headers);
+  private function validateHeaders(array $header): array {
+    $missing_headers = array_diff(self::REQUIRED_HEADERS, $header);
+    $extra_headers = array_diff($header, self::REQUIRED_HEADERS);
 
-    if (!empty($missing_headers) || !empty($extra_headers)) {
-      $error_message = 'CSV header validation failed. ';
-      if (!empty($missing_headers)) {
-        $error_message .= 'Missing headers: ' . implode(', ', $missing_headers) . '. ';
-      }
-      if (!empty($extra_headers)) {
-        $error_message .= 'Extra headers: ' . implode(', ', $extra_headers) . '.';
-      }
-      $this->logger->error($error_message);
-      return ['status' => 'error', 'message' => $error_message];
+    if (empty($missing_headers) && empty($extra_headers)) {
+      return ['status' => 'success'];
     }
 
-    return ['status' => 'success'];
+    $error_message = 'CSV header validation failed. ';
+    if (!empty($missing_headers)) {
+      $error_message .= 'Missing headers: ' . implode(', ', $missing_headers) . '. ';
+    }
+    if (!empty($extra_headers)) {
+      $error_message .= 'Extra headers: ' . implode(', ', $extra_headers) . '.';
+    }
+
+    $this->logger->error($error_message);
+    return ['status' => 'error', 'message' => $error_message];
+  }
+
+  /**
+   * Creates error result array.
+   *
+   * @param string $message
+   *   Error message.
+   * @param int $processed
+   *   Processed count.
+   * @param int $skipped
+   *   Skipped count.
+   * @param array $skippedRows
+   *   Skipped row numbers.
+   *
+   * @return array
+   *   Error result.
+   */
+  private function errorResult(
+    string $message,
+    int $processed = 0,
+    int $skipped = 0,
+    array $skippedRows = [],
+  ): array {
+    return [
+      'status' => 'error',
+      'message' => $message,
+      'processed' => $processed,
+      'skipped' => $skipped,
+      'skipped_rows' => $skippedRows,
+    ];
   }
 
 }

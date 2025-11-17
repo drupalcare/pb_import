@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\pb_import\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
+use Drupal\file\FileStorageInterface;
 
 /**
  * Service to manage file operations.
@@ -14,99 +16,84 @@ use Drupal\file\Entity\File;
 class FileManager {
 
   /**
-   * The file system service.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected FileSystemInterface $fileSystem;
-
-  /**
-   * The entity type manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The logger channel.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
-
-  /**
-   * The utility service.
-   *
-   * @var \Drupal\pb_import\Service\Utility
-   */
-  protected Utility $utility;
-
-  /**
    * Allowed file extensions.
-   *
-   * @var array
    */
-  protected array $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+  private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
   /**
-   * FileManager constructor.
+   * Constructs a FileManager object.
    *
-   * @param \Drupal\Core\File\FileSystemInterface $file_system
+   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   The file system service.
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager service.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger channel factory.
-   * @param \Drupal\pb_import\Service\Utility $utility
-   *   The utility service.
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger channel.
    */
-  public function __construct(FileSystemInterface $file_system, EntityTypeManagerInterface $entity_type_manager, LoggerChannelFactoryInterface $logger_factory, Utility $utility) {
-    $this->fileSystem = $file_system;
-    $this->entityTypeManager = $entity_type_manager;
-    $this->logger = $logger_factory->get('pb_import');
-    $this->utility = $utility;
-  }
+  public function __construct(
+    private readonly FileSystemInterface $fileSystem,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly LoggerChannelInterface $logger,
+  ) {}
 
   /**
    * Retrieves the file ID by file path and name.
    *
-   * @param string $image_folder_relative_path
+   * @param string $imageFolderRelativePath
    *   The folder name.
-   * @param string $image_name
+   * @param string $imageName
    *   The image name.
    *
    * @return int|null
    *   The file ID or NULL if the file does not exist.
    */
-  public function getFileId($image_folder_relative_path, $image_name) {
-    $site_specific_path = $this->utility->getSiteSpecificPath();
-    $file_path = $site_specific_path . '/' . trim($image_folder_relative_path, '/') . '/' . $image_name;
-    $real_path = $this->fileSystem->realpath($file_path);
+  public function getFileId(string $imageFolderRelativePath, string $imageName): ?int {
+    $file_uri = 'public://' . trim($imageFolderRelativePath, '/') . '/' . $imageName;
+    $real_path = $this->fileSystem->realpath($file_uri);
 
-    $this->logger->info('Attempting to locate file at: @file_path', ['@file_path' => $file_path]);
-    $this->logger->info('Resolved real path: @real_path', ['@real_path' => $real_path]);
+    $this->logger->info('Attempting to locate file at URI: @file_uri', [
+      '@file_uri' => $file_uri,
+    ]);
 
-    if (file_exists($real_path)) {
-      $file_uri = 'public://' . trim($image_folder_relative_path, '/') . '/' . $image_name;
-      $this->logger->info('File URI: @file_uri', ['@file_uri' => $file_uri]);
+    if ($real_path === FALSE || !file_exists($real_path)) {
+      $this->logger->warning('File not found in Drupal file system: @file_uri', [
+        '@file_uri' => $file_uri,
+      ]);
+      return NULL;
+    }
 
-      $existing_files = $this->entityTypeManager->getStorage('file')->loadByProperties(['uri' => $file_uri]);
-      if ($existing_files) {
-        $existing_file = reset($existing_files);
-        $this->logger->info('Existing file found with ID: @id', ['@id' => $existing_file->id()]);
-        return $existing_file->id();
-      }
+    /** @var \Drupal\file\FileStorageInterface $file_storage */
+    $file_storage = $this->entityTypeManager->getStorage('file');
+    assert($file_storage instanceof FileStorageInterface);
 
-      $file = File::create([
+    $existing_files = $file_storage->loadByProperties(['uri' => $file_uri]);
+
+    if (!empty($existing_files)) {
+      /** @var \Drupal\file\FileInterface $existing_file */
+      $existing_file = reset($existing_files);
+      $this->logger->info('Existing file found with ID: @id', [
+        '@id' => $existing_file->id(),
+      ]);
+      return (int) $existing_file->id();
+    }
+
+    try {
+      /** @var \Drupal\file\FileInterface $file */
+      $file = $file_storage->create([
         'uri' => $file_uri,
-        'status' => File::STATUS_PERMANENT,
+        'status' => FileInterface::STATUS_PERMANENT,
       ]);
       $file->save();
-      $this->logger->info('New file entity created with ID: @id', ['@id' => $file->id()]);
-      return $file->id();
+      $this->logger->info('New file entity created with ID: @id', [
+        '@id' => $file->id(),
+      ]);
+      return (int) $file->id();
     }
-    else {
-      $this->logger->warning('File not found in Drupal file system: @file', ['@file' => $file_path]);
+    catch (\Exception $e) {
+      $this->logger->error('Failed to create file entity for @uri: @message', [
+        '@uri' => $file_uri,
+        '@message' => $e->getMessage(),
+      ]);
       return NULL;
     }
   }
@@ -114,35 +101,15 @@ class FileManager {
   /**
    * Validates the file extension.
    *
-   * @param object $file
-   *   The file object.
+   * @param string $filename
+   *   The file name.
    *
    * @return bool
    *   TRUE if the file extension is valid, FALSE otherwise.
    */
-  public function validateFileExtension($file) {
-    $extension = pathinfo($file->filename, PATHINFO_EXTENSION);
-    return in_array(strtolower($extension), $this->allowedExtensions, TRUE);
-  }
-
-  /**
-   * Processes the file.
-   *
-   * @param object $file
-   *   The file object.
-   *
-   * @return bool
-   *   TRUE if the file was processed successfully, FALSE otherwise.
-   */
-  public function processFile($file) {
-    if (!$this->validateFileExtension($file)) {
-      $this->logger->error('Invalid file extension: ' . $file->filename);
-      return FALSE;
-    }
-
-    // Process the file if it has a valid extension.
-    // Your processing logic here...
-    return TRUE;
+  public function validateFileExtension(string $filename): bool {
+    $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+    return in_array($extension, self::ALLOWED_EXTENSIONS, TRUE);
   }
 
 }

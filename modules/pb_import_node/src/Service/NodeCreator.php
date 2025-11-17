@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\pb_import_node\Service;
 
-use Drupal\Component\Utility\Html;
-use Drupal\Component\Utility\Xss;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\node\NodeStorageInterface;
 use Drupal\pb_import\Service\FileManager;
 use Drupal\pb_import\Service\TermManager;
 
@@ -17,162 +17,133 @@ use Drupal\pb_import\Service\TermManager;
 class NodeCreator {
 
   /**
-   * The entity type manager service.
+   * Constructs a NodeCreator object.
    *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected EntityTypeManagerInterface $entityTypeManager;
-
-  /**
-   * The logger channel.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
-
-  /**
-   * The term manager service.
-   *
-   * @var \Drupal\pb_import\Service\TermManager
-   */
-  protected TermManager $termManager;
-
-  /**
-   * The file manager service.
-   *
-   * @var \Drupal\pb_import\Service\FileManager
-   */
-  protected FileManager $fileManager;
-
-  /**
-   * NodeCreator constructor.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager service.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger channel factory.
-   * @param \Drupal\pb_import\Service\TermManager $term_manager
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger channel.
+   * @param \Drupal\pb_import\Service\TermManager $termManager
    *   The term manager service.
-   * @param \Drupal\pb_import\Service\FileManager $file_manager
+   * @param \Drupal\pb_import\Service\FileManager $fileManager
    *   The file manager service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, LoggerChannelFactoryInterface $logger_factory, TermManager $term_manager, FileManager $file_manager) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->logger = $logger_factory->get('pb_import_node');
-    $this->termManager = $term_manager;
-    $this->fileManager = $file_manager;
-  }
+  public function __construct(
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly LoggerChannelInterface $logger,
+    private readonly TermManager $termManager,
+    private readonly FileManager $fileManager,
+  ) {}
 
   /**
    * Creates a node.
    *
    * @param array $data
    *   The data for the node.
-   * @param string $folder_name
+   * @param string $folderName
    *   The folder name for image files.
-   * @param string $content_type
+   * @param string $contentType
    *   The content type.
-   * @param string $vocabulary_name
+   * @param string $vocabularyName
    *   The vocabulary name.
    *
    * @return bool
    *   TRUE if the node was created successfully, FALSE otherwise.
    */
-  public function create(array $data, $folder_name, $content_type, $vocabulary_name) {
-    return $this->createNode($data, $folder_name, $content_type, $vocabulary_name);
-  }
-
-  /**
-   * Creates a node entity.
-   *
-   * @param array $data
-   *   The data for the node.
-   * @param string $folder_name
-   *   The folder name for image files.
-   * @param string $content_type
-   *   The content type.
-   * @param string $vocabulary_name
-   *   The vocabulary name.
-   *
-   * @return bool
-   *   TRUE if the node was created successfully, FALSE otherwise.
-   */
-  public function createNode(array $data, $folder_name, $content_type, $vocabulary_name) {
-    $image_name = $this->sanitizeData($data['csv_image_url']);
-    $node_title = $this->sanitizeData($data['csv_node_title']);
-    $csv_node_body = !empty($data['csv_node_body']) ? $this->sanitizeData($data['csv_node_body'], FALSE) : NULL;
+  public function create(
+    array $data,
+    string $folderName,
+    string $contentType,
+    string $vocabularyName,
+  ): bool {
+    $image_name = trim((string) ($data['csv_image_url'] ?? ''));
+    $node_title = trim((string) ($data['csv_node_title'] ?? ''));
+    $node_body = trim((string) ($data['csv_node_body'] ?? ''));
 
     // Skip rows without a title or without either image or body.
-    if (empty($node_title) || (empty($image_name) && empty($csv_node_body))) {
-      $this->logger->warning('Skipped row due to missing title and either image or body: @row', ['@row' => implode(', ', $data)]);
+    if ($node_title === '' || ($image_name === '' && $node_body === '')) {
+      $this->logger->warning('Skipped row due to missing title and either image or body');
       return FALSE;
     }
 
-    $image_title = $this->sanitizeData($data['csv_image_title']);
-    $image_alt = $this->sanitizeData($data['csv_image_alt']);
-    $taxonomy_term_names = explode('|', $this->sanitizeData($data['csv_node_tag']));
+    $image_title = trim((string) ($data['csv_image_title'] ?? ''));
+    $image_alt = trim((string) ($data['csv_image_alt'] ?? ''));
+    $tag_value = trim((string) ($data['csv_node_tag'] ?? ''));
 
     $terms = [];
-    foreach ($taxonomy_term_names as $taxonomy_term_name) {
-      $term = $this->termManager->getOrCreateTerm($taxonomy_term_name, $vocabulary_name);
-      if ($term) {
-        $terms[] = ['target_id' => $term->id()];
-      }
-      else {
-        $this->logger->error('Failed to process term: @term', ['@term' => $taxonomy_term_name]);
-        return FALSE;
+    if ($tag_value !== '') {
+      $taxonomy_term_names = explode('|', $tag_value);
+
+      foreach ($taxonomy_term_names as $taxonomy_term_name) {
+        $taxonomy_term_name = trim($taxonomy_term_name);
+        if ($taxonomy_term_name === '') {
+          continue;
+        }
+
+        $term = $this->termManager->getOrCreateTerm($taxonomy_term_name, $vocabularyName);
+        if ($term !== NULL) {
+          $terms[] = ['target_id' => $term->id()];
+        }
+        else {
+          $this->logger->error('Failed to process term: @term', [
+            '@term' => $taxonomy_term_name,
+          ]);
+          return FALSE;
+        }
       }
     }
 
-    $file_id = NULL;
-    if (!empty($image_name)) {
-      $file_id = $this->fileManager->getFileId($folder_name, $image_name);
-      if (!$file_id) {
-        $this->logger->warning('File not found: @file', ['@file' => $folder_name . '/' . $image_name]);
-        return FALSE;
-      }
-    }
+    /** @var \Drupal\node\NodeStorageInterface $node_storage */
+    $node_storage = $this->entityTypeManager->getStorage('node');
+    assert($node_storage instanceof NodeStorageInterface);
 
-    $node = Node::create([
-      'type' => $content_type,
+    $node_data = [
+      'type' => $contentType,
       'title' => $node_title,
       'pb_import_node_tag' => $terms,
-    ]);
+    ];
 
-    if ($file_id) {
-      $node->set('pb_import_node_image', [
+    // Handle image if provided.
+    if ($image_name !== '') {
+      $file_id = $this->fileManager->getFileId($folderName, $image_name);
+      if ($file_id === NULL) {
+        $this->logger->warning('File not found: @file', [
+          '@file' => $folderName . '/' . $image_name,
+        ]);
+        return FALSE;
+      }
+
+      $node_data['pb_import_node_image'] = [
         'target_id' => $file_id,
         'alt' => $image_alt,
         'title' => $image_title,
-      ]);
+      ];
     }
 
-    if ($csv_node_body) {
-      $node->set('pb_import_node_body', [
-        'value' => $csv_node_body,
+    // Handle body if provided.
+    if ($node_body !== '') {
+      $node_data['pb_import_node_body'] = [
+        'value' => $node_body,
         'format' => 'full_html',
-      ]);
+      ];
     }
 
-    $node->save();
-    $this->logger->info('Node created with ID: @node_id', ['@node_id' => $node->id()]);
-
-    return TRUE;
-  }
-
-  /**
-   * Sanitizes input data.
-   *
-   * @param string $data
-   *   The data to sanitize.
-   * @param bool $escape_html
-   *   (optional) Whether to escape HTML. Defaults to TRUE.
-   *
-   * @return string
-   *   The sanitized data.
-   */
-  private function sanitizeData($data, $escape_html = TRUE) {
-    return $escape_html ? Html::escape(Xss::filter($data)) : Xss::filter($data);
+    try {
+      /** @var \Drupal\node\NodeInterface $node */
+      $node = $node_storage->create($node_data);
+      assert($node instanceof NodeInterface);
+      $node->save();
+      $this->logger->info('Node created with ID: @node_id', [
+        '@node_id' => $node->id(),
+      ]);
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      $this->logger->error('Failed to create node: @message', [
+        '@message' => $e->getMessage(),
+      ]);
+      return FALSE;
+    }
   }
 
 }

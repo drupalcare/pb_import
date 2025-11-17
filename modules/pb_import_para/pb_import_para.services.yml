@@ -1,8 +1,18 @@
 services:
-  pb_import_para.csv_processor.paragraph:
-    class: Drupal\pb_import_para\Service\CSVProcessorPara
-    arguments: ['@file_system', '@logger.factory', '@pb_import_para.paragraph_creator']
+  logger.channel.pb_import_para:
+    parent: logger.channel_base
+    arguments: ['pb_import_para']
 
   pb_import_para.paragraph_creator:
     class: Drupal\pb_import_para\Service\ParagraphCreator
-    arguments: ['@logger.factory', '@pb_import.file_manager', '@pb_import.term_manager']
+    arguments:
+      - '@logger.channel.pb_import_para'
+      - '@pb_import.file_manager'
+      - '@pb_import.term_manager'
+
+  pb_import_para.csv_processor.paragraph:
+    class: Drupal\pb_import_para\Service\CSVProcessorPara
+    arguments:
+      - '@file_system'
+      - '@logger.channel.pb_import_para'
+      - '@pb_import_para.paragraph_creator'

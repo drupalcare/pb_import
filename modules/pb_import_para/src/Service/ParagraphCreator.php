@@ -1,165 +1,152 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\pb_import_para\Service;
 
-use Drupal\Component\Utility\Html;
-use Drupal\Component\Utility\Xss;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\paragraphs\Entity\Paragraph;
+use Drupal\paragraphs\ParagraphInterface;
 use Drupal\pb_import\Service\FileManager;
 use Drupal\pb_import\Service\TermManager;
-use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Service to create paragraphs from CSV data.
  */
 class ParagraphCreator {
-  /**
-   * The logger channel.
-   *
-   * @var \Drupal\Core\Logger\LoggerChannelInterface
-   */
-  protected LoggerChannelInterface $logger;
-
-  /**
-   * The file manager service.
-   *
-   * @var \Drupal\pb_import\Service\FileManager
-   */
-  protected FileManager $fileManager;
-
-  /**
-   * The term manager service.
-   *
-   * @var \Drupal\pb_import\Service\TermManager
-   */
-  protected TermManager $termManager;
 
   /**
    * Constructs a ParagraphCreator object.
    *
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
-   *   The logger channel factory.
+   * @param \Drupal\Core\Logger\LoggerChannelInterface $logger
+   *   The logger channel.
    * @param \Drupal\pb_import\Service\FileManager $fileManager
    *   The file manager service.
    * @param \Drupal\pb_import\Service\TermManager $termManager
    *   The term manager service.
    */
-  public function __construct(LoggerChannelFactoryInterface $logger_factory, FileManager $fileManager, TermManager $termManager) {
-    $this->logger = $logger_factory->get('pb_import_para');
-    $this->fileManager = $fileManager;
-    $this->termManager = $termManager;
-  }
+  public function __construct(
+    private readonly LoggerChannelInterface $logger,
+    private readonly FileManager $fileManager,
+    private readonly TermManager $termManager,
+  ) {}
 
   /**
    * Creates a paragraph entity.
    *
    * @param array $data
    *   The data for the paragraph.
-   * @param string $image_folder_relative_path
+   * @param string $imageFolderRelativePath
    *   The folder name for image files.
-   * @param string $paragraph_type
+   * @param string $paragraphType
    *   The paragraph type.
-   * @param string $vocabulary_name
+   * @param string $vocabularyName
    *   The vocabulary name.
-   * @param bool $is_parent
+   * @param bool $isParent
    *   (optional) Whether the paragraph is a parent paragraph Defaults to FALSE.
    *
-   * @return \Drupal\paragraphs\Entity\Paragraph|bool
-   *   The created paragraph entity, or FALSE on failure.
+   * @return \Drupal\paragraphs\ParagraphInterface|null
+   *   The created paragraph entity, or NULL on failure.
    */
-  public function createParagraph(array $data, string $image_folder_relative_path, string $paragraph_type, string $vocabulary_name, bool $is_parent = FALSE) {
-    $paragraph_data = ['type' => $paragraph_type];
+  public function createParagraph(
+    array $data,
+    string $imageFolderRelativePath,
+    string $paragraphType,
+    string $vocabularyName,
+    bool $isParent = FALSE,
+  ): ?ParagraphInterface {
+    $paragraph_data = ['type' => $paragraphType];
 
+    // Process data - no manual sanitization, Drupal handles it.
     foreach ($data as $field_name => $value) {
       if (is_array($value)) {
         $paragraph_data[$field_name] = $value;
       }
       else {
-        $paragraph_data[$field_name] = $this->sanitizeData($value);
+        $paragraph_data[$field_name] = trim((string) $value);
       }
     }
 
+    // Handle body field with text format.
     if (isset($data['pb_target_body'])) {
       $paragraph_data['pb_target_body'] = [
-        'value' => $data['pb_target_body'],
+        'value' => trim((string) $data['pb_target_body']),
         'format' => 'full_html',
       ];
     }
 
-    if (!$is_parent && !empty($data['pb_target_image'])) {
-      $this->logger->info('Attempting to get file ID for image: @image', ['@image' => $data['pb_target_image']]);
-      $file_id = $this->fileManager->getFileId($image_folder_relative_path, $data['pb_target_image']);
-      if ($file_id) {
-        $paragraph_data['pb_target_image'] = [
-          'target_id' => $file_id,
-          'alt' => $this->sanitizeData($data['csv_image_alt'] ?? ''),
-          'title' => $this->sanitizeData($data['csv_image_title'] ?? ''),
-        ];
-        $this->logger->info('File ID for image @image: @file_id',
-          ['@image' => $data['pb_target_image'], '@file_id' => $file_id]);
-      }
-      else {
-        $this->logger->warning('File not found: @file', ['@file' => $image_folder_relative_path . '/' . $data['pb_target_image']]);
-      }
-    }
-    elseif (!$is_parent) {
-      $this->logger->warning('Image field pb_target_image is empty or not set.');
-    }
+    // Handle image field.
+    if (!$isParent && isset($data['pb_target_image'])) {
+      $image_file = trim((string) $data['pb_target_image']);
 
-    if (!empty($data['pb_target_tag'])) {
-      $terms = [];
-      $term_names = explode('|', $this->sanitizeData($data['pb_target_tag']));
-      foreach ($term_names as $term_name) {
-        $term = $this->termManager->getOrCreateTerm($term_name, $vocabulary_name);
-        if ($term) {
-          $terms[] = ['target_id' => $term->id()];
+      if ($image_file !== '') {
+        $file_id = $this->fileManager->getFileId($imageFolderRelativePath, $image_file);
+
+        if ($file_id !== NULL) {
+          $paragraph_data['pb_target_image'] = [
+            'target_id' => $file_id,
+            'alt' => trim((string) ($data['csv_image_alt'] ?? '')),
+            'title' => trim((string) ($data['csv_image_title'] ?? '')),
+          ];
+          $this->logger->info('File ID for image @image: @file_id', [
+            '@image' => $image_file,
+            '@file_id' => $file_id,
+          ]);
         }
         else {
-          $this->logger->warning('Failed to create or load term: @term', ['@term' => $term_name]);
+          $this->logger->warning('File not found: @file', [
+            '@file' => $imageFolderRelativePath . '/' . $image_file,
+          ]);
         }
       }
-      $paragraph_data['pb_target_tag'] = $terms;
+    }
+
+    // Handle taxonomy terms.
+    if (isset($data['pb_target_tag'])) {
+      $tag_value = trim((string) $data['pb_target_tag']);
+
+      if ($tag_value !== '') {
+        $terms = [];
+        $term_names = explode('|', $tag_value);
+
+        foreach ($term_names as $term_name) {
+          $term_name = trim($term_name);
+          if ($term_name === '') {
+            continue;
+          }
+
+          $term = $this->termManager->getOrCreateTerm($term_name, $vocabularyName);
+          if ($term !== NULL) {
+            $terms[] = ['target_id' => $term->id()];
+          }
+          else {
+            $this->logger->warning('Failed to create or load term: @term', [
+              '@term' => $term_name,
+            ]);
+          }
+        }
+
+        if (!empty($terms)) {
+          $paragraph_data['pb_target_tag'] = $terms;
+        }
+      }
     }
 
     try {
-      $this->logger->info('Creating paragraph with data: @data', ['@data' => print_r($paragraph_data, TRUE)]);
+      /** @var \Drupal\paragraphs\ParagraphInterface $paragraph */
       $paragraph = Paragraph::create($paragraph_data);
       $paragraph->save();
-      $this->logger->info('Paragraph created with ID: @id', ['@id' => $paragraph->id()]);
+      $this->logger->info('Paragraph created with ID: @id', [
+        '@id' => $paragraph->id(),
+      ]);
       return $paragraph;
     }
     catch (\Exception $e) {
-      $this->logger->error('Error creating paragraph: @message', ['@message' => $e->getMessage()]);
-      return FALSE;
+      $this->logger->error('Error creating paragraph: @message', [
+        '@message' => $e->getMessage(),
+      ]);
+      return NULL;
     }
-  }
-
-  /**
-   * Sanitizes input data.
-   *
-   * @param string|null $data
-   *   The data to sanitize.
-   *
-   * @return string
-   *   The sanitized data.
-   */
-  private function sanitizeData(?string $data): string {
-    return $data !== NULL ? Html::escape(Xss::filter($data)) : '';
-  }
-
-  /**
-   * Checks if a vocabulary exists.
-   *
-   * @param string $vocabulary_name
-   *   The vocabulary name.
-   *
-   * @return bool
-   *   TRUE if the vocabulary exists, FALSE otherwise.
-   */
-  private function vocabularyExists(string $vocabulary_name): bool {
-    return Vocabulary::load($vocabulary_name) !== NULL;
   }
 
 }
