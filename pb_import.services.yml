@@ -29,3 +29,17 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@logger.channel.pb_import'
+
+  pb_import.help_renderer:
+    class: Drupal\pb_import\Service\HelpRenderer
+    arguments:
+      - '@module_handler'
+      - '@config.factory'
+      - '@extension.list.module'
+      - '@plugin.manager.filter'
+
+  Drupal\pb_import\Hook\PbImportHooks:
+    class: Drupal\pb_import\Hook\PbImportHooks
+    arguments:
+      - '@pb_import.help_renderer'
+      - '@current_route_match'

@@ -2,42 +2,13 @@
 
 /**
  * @file
- * Paragraph Bundle Import Paragraph.
+ * Imports CSV data into paragraph bundles.
  *
  * Filename:     pb_import_para.module
  * Website:      https://www.flashwebcenter.com
- * Description:  Imports CSV data into paragraph bundles.
  * Developer:    Alaa Haddad https://www.alaahaddad.com.
+ *
+ * Hook implementations live in `src/Hook/`, as OOP hook classes.
  */
 
 declare(strict_types=1);
-
-use Drupal\Core\Routing\RouteMatchInterface;
-
-/**
- * Implements hook_help().
- */
-function pb_import_para_help(string $route_name, RouteMatchInterface $route_match): ?string {
-  if ($route_name === 'help.page.pb_import_para') {
-    $readme_file = __DIR__ . '/README.md';
-    if (file_exists($readme_file)) {
-      $text = file_get_contents($readme_file);
-      if ($text === FALSE) {
-        return NULL;
-      }
-
-      if (!\Drupal::moduleHandler()->moduleExists('markdown')) {
-        return '<pre>' . htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</pre>';
-      }
-
-      $filter_manager = \Drupal::service('plugin.manager.filter');
-      $settings = \Drupal::configFactory()
-        ->get('markdown.settings')
-        ->getRawData();
-      $config = ['settings' => $settings];
-      $filter = $filter_manager->createInstance('markdown', $config);
-      return $filter->process($text, 'en');
-    }
-  }
-  return NULL;
-}

@@ -61,3 +61,7 @@
 /drupal.phar
 /drupal
 .DS_Store
+
+# drupal.org packages a LICENSE.txt into every release; committing one
+# duplicates it in the tarball.
+LICENSE.txt

@@ -11,15 +11,15 @@
             "role": "Maintainer"
         }
     ],
-    "homepage": "https://drupal.org/project/pb_import_para",
+    "homepage": "https://drupal.org/project/pb_import",
     "require": {
         "drupal/core": "^11.3 || ^12",
         "drupal/pb_import": "*",
         "drupal/paragraphs_bundles": "^2.0"
     },
     "support": {
-        "issues": "https://drupal.org/project/issues/pb_import_para",
-        "source": "https://git.drupalcode.org/project/pb_import_para"
+        "issues": "https://drupal.org/project/issues/pb_import",
+        "source": "https://git.drupalcode.org/project/pb_import"
     },
     "prefer-stable": true
 }

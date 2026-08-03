@@ -17,3 +17,7 @@ services:
       - '@file_system'
       - '@logger.channel.pb_import_node'
       - '@pb_import_node.node_creator'
+
+  Drupal\pb_import_node\Hook\PbImportNodeHooks:
+    arguments:
+      - '@pb_import.help_renderer'

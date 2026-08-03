@@ -1,0 +1,19 @@
+# GitLab CI for drupal.org (git.drupalcode.org).
+#
+# Template docs: https://project.pages.drupalcode.org/gitlab_templates/
+#
+# The variable names are case-sensitive and are defined by the drupal.org
+# instance. Lower-cased ones expand to empty strings and the include fails with
+# a message about a malformed `include`, never about the variable.
+include:
+  - project: $_GITLAB_TEMPLATES_REPO
+    ref: $_GITLAB_TEMPLATES_REF
+    file:
+      - '/includes/include.drupalci.main.yml'
+      - '/includes/include.drupalci.variables.yml'
+      - '/includes/include.drupalci.workflows.yml'
+
+variables:
+  # cspell flags the CSV fixture vocabulary and the pb_* machine names. Turn
+  # this back on together with a `.cspell-project-words.txt`.
+  SKIP_CSPELL: '1'

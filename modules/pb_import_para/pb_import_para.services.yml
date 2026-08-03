@@ -16,3 +16,7 @@ services:
       - '@file_system'
       - '@logger.channel.pb_import_para'
       - '@pb_import_para.paragraph_creator'
+
+  Drupal\pb_import_para\Hook\PbImportParaHooks:
+    arguments:
+      - '@pb_import.help_renderer'
