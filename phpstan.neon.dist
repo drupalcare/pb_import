@@ -1,0 +1,18 @@
+# PHPStan for PB Import.
+#
+# Run it from the symlink inside a Drupal docroot, never from the working
+# tree: from here the Drupal extension cannot locate core and reports
+# 1000+ phantom class.notFound errors, which looks exactly like a real
+# regression.
+#
+#   cd web/modules/custom/pb_import
+#   ../../../../vendor/bin/phpstan analyse -c phpstan.neon.dist
+parameters:
+  level: 6
+  paths:
+    - src
+    - modules
+    - pb_import.module
+  excludePaths:
+    - modules/*/tests
+  treatPhpDocTypesAsCertain: false

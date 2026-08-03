@@ -3,7 +3,7 @@
     "description": "A module to import content and create nodes/paragraphs from a CSV file.",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "authors": [
         {
             "name": "Alaa Haddad (alaahaddad.com)",
@@ -13,12 +13,14 @@
     ],
     "homepage": "https://drupal.org/project/pb_import",
     "require": {
-        "drupal/core": "^10 || ^11",
+        "drupal/core": "^11.3 || ^12",
         "drupal/entity_reference_revisions": "*",
-        "drupal/paragraphs": "*"
+        "drupal/paragraphs": "*",
+        "drupal/paragraphs_bundles": "^2.0"
     },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import",
         "source": "https://git.drupalcode.org/project/pb_import"
-    }
+    },
+    "prefer-stable": true
 }

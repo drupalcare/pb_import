@@ -1,7 +1,7 @@
 # PB Import
 
-[![Drupal 10](https://img.shields.io/badge/Drupal-10-blue.svg)](https://www.drupal.org/project/pb_import)
-[![Drupal 11](https://img.shields.io/badge/Drupal-11-blue.svg)](https://www.drupal.org/project/pb_import)
+[![Drupal 11](https://img.shields.io/badge/Drupal-11.3+-blue.svg)](https://www.drupal.org/project/pb_import)
+[![Drupal 12](https://img.shields.io/badge/Drupal-12-blue.svg)](https://www.drupal.org/project/pb_import)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/gpl-2.0)
 
 ## Table of Contents
@@ -46,7 +46,7 @@ This module is ideal for:
 - **Image Handling**: Support for image fields with alt text and titles
 - **Security**: Path traversal prevention and input sanitization
 - **Error Handling**: Comprehensive logging and user-friendly error messages
-- **Type Safety**: Full PHP 8+ strict typing and Drupal 11 compliance
+- **Type Safety**: Full PHP 8+ strict typing and Drupal 11.3+/12 compliance
 
 ### Paragraph Types Supported
 - **Slideshow**: Image carousels with captions
@@ -56,8 +56,15 @@ This module is ideal for:
 ## Requirements
 
 ### Drupal Core
-- Drupal 10.0 or higher
-- Drupal 11.0 or higher
+- Drupal 11.3 or higher, or Drupal 12
+
+### Paragraphs Bundles
+- **PB Import 2.x requires Paragraphs Bundles 2.x.** The paragraph
+  bundles and field names it writes to are unchanged between PB 1.x and
+  2.x, so the importer itself needed no rewrite — but 2.x is built and
+  tested against PB 2.x and Drupal 11.3+/12.
+- Staying on Drupal 10, or on Paragraphs Bundles 1.x? Use the **1.0.x**
+  branch of this module.
 
 ### Required Modules
 - **block**: Core content blocks
@@ -493,7 +500,7 @@ We welcome contributions! Please follow these guidelines:
 ### Code Standards
 - PHP 8.1+ with strict typing
 - PSR-4 autoloading
-- Drupal 11 API compliance
+- Drupal 11.3+/12 API compliance
 - PHPStan level 6 or higher
 
 ### Testing
@@ -536,5 +543,6 @@ more details.
 - [Git Repository](https://git.drupalcode.org/project/pb_import)
 
 **Version**: 2.0.x-dev  
-**Last Updated**: 2024  
-**Drupal Compatibility**: 10.x, 11.x
+**Last Updated**: 2026-08-03  
+**Drupal Compatibility**: 11.3+, 12.x  
+**Paragraphs Bundles Compatibility**: 2.x

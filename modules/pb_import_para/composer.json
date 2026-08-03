@@ -3,7 +3,7 @@
     "description": "Import content to make slideshow or others.",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "authors": [
         {
             "name": "Alaa Haddad (alaahaddad.com)",
@@ -13,12 +13,13 @@
     ],
     "homepage": "https://drupal.org/project/pb_import_para",
     "require": {
-        "drupal/core": "^10 || ^11",
+        "drupal/core": "^11.3 || ^12",
         "drupal/pb_import": "*",
-        "drupal/paragraphs_bundles": "*"
+        "drupal/paragraphs_bundles": "^2.0"
     },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import_para",
         "source": "https://git.drupalcode.org/project/pb_import_para"
-    }
+    },
+    "prefer-stable": true
 }

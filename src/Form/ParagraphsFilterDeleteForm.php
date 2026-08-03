@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\pb_import\Form;
 
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\paragraphs\ParagraphInterface;
-use Drupal\paragraphs\ParagraphStorageInterface;
-use Drupal\paragraphs_type\ParagraphsTypeInterface;
+use Drupal\paragraphs\ParagraphsTypeInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -139,9 +139,8 @@ class ParagraphsFilterDeleteForm extends FormBase {
    *   The total number of paragraphs.
    */
   protected function getTotalParagraphCount(?string $type = NULL): int {
-    /** @var \Drupal\paragraphs\ParagraphStorageInterface $paragraph_storage */
     $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
-    assert($paragraph_storage instanceof ParagraphStorageInterface);
+    assert($paragraph_storage instanceof EntityStorageInterface);
 
     $query = $paragraph_storage->getQuery()
       ->accessCheck(TRUE)
@@ -165,9 +164,8 @@ class ParagraphsFilterDeleteForm extends FormBase {
    *   The array of paragraphs.
    */
   protected function getParagraphs(?string $type = NULL): array {
-    /** @var \Drupal\paragraphs\ParagraphStorageInterface $paragraph_storage */
     $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
-    assert($paragraph_storage instanceof ParagraphStorageInterface);
+    assert($paragraph_storage instanceof EntityStorageInterface);
 
     $query = $paragraph_storage->getQuery()
       ->accessCheck(TRUE)
@@ -254,9 +252,8 @@ class ParagraphsFilterDeleteForm extends FormBase {
       return;
     }
 
-    /** @var \Drupal\paragraphs\ParagraphStorageInterface $paragraph_storage */
     $paragraph_storage = $this->entityTypeManager->getStorage('paragraph');
-    assert($paragraph_storage instanceof ParagraphStorageInterface);
+    assert($paragraph_storage instanceof EntityStorageInterface);
 
     $deleted_count = 0;
     foreach ($selected_paragraphs as $paragraph_id) {

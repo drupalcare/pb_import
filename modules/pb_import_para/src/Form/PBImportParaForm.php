@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\pb_import_para\Form;
 
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -339,7 +340,7 @@ class PBImportParaForm extends FormBase {
       $temp_file_path = $this->fileSystem->copy(
         $uploaded_file->getPathname(),
         $temp_file_uri,
-        FileSystemInterface::EXISTS_RENAME
+        FileExists::Rename
       );
 
       if ($temp_file_path === FALSE) {
@@ -352,7 +353,7 @@ class PBImportParaForm extends FormBase {
       $file = $this->fileRepository->writeData(
         (string) file_get_contents($temp_file_path),
         $temp_file_uri,
-        FileSystemInterface::EXISTS_RENAME
+        FileExists::Rename
       );
 
       if ($file instanceof FileInterface) {
