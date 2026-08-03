@@ -16,7 +16,7 @@
         "drupal/core": "^11.3 || ^12",
         "drupal/entity_reference_revisions": "*",
         "drupal/paragraphs": "*",
-        "drupal/paragraphs_bundles": "^2.0"
+        "drupal/paragraphs_bundles": "^2.0@dev"
     },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import",
