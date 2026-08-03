@@ -75,9 +75,22 @@ class ParagraphCreator {
       ];
     }
 
+    // `csv_image_alt` and `csv_image_title` are CSV columns, not fields. The
+    // copy above put them in the entity values with everything else.
+    unset($paragraph_data['csv_image_alt'], $paragraph_data['csv_image_title']);
+
     // Handle image field.
     if (!$isParent && isset($data['pb_target_image'])) {
       $image_file = trim((string) $data['pb_target_image']);
+
+      // The copy above also put the raw CSV value here, and for a row with no
+      // image that value is ''. Drupal stores an empty image value as an item
+      // with `target_id: 0` — a reference to a file that cannot exist, which
+      // logs "Missing file with ID 0" once per row and leaves a dangling item
+      // on every paragraph the import creates. Clear it, and set a real one
+      // below only when the file actually resolves. The node importer has
+      // always worked this way; this brings the paragraph side in line.
+      unset($paragraph_data['pb_target_image']);
 
       if ($image_file !== '') {
         $file_id = $this->fileManager->getFileId($imageFolderRelativePath, $image_file);

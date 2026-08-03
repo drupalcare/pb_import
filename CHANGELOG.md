@@ -20,6 +20,16 @@ What did need fixing was this module's own compatibility with the Drupal
 versions PB 2.x targets.
 
 ### Fixed
+- **A row with no image left a broken image reference on every paragraph it
+  created.** `ParagraphCreator` copies each CSV column into the entity values
+  before the image block runs, so an empty `csv_image_url` arrived as `''` and
+  Drupal stored it as an image item with `target_id: 0` — a reference to a file
+  that cannot exist. Importing the shipped `para-without-images.csv` produced 30
+  such items and 60 "Missing file with ID 0" warnings per run. The image field
+  is now cleared before the resolved file is set, matching what the node
+  importer has always done. The two CSV-only columns `csv_image_alt` and
+  `csv_image_title` are no longer copied into the entity either; they are
+  columns, not fields.
 - **The paragraphs list and the delete form returned HTTP 500 on any site with
   assertions enabled.** Two `use` statements named classes that do not exist —
   `Drupal\paragraphs\ParagraphStorageInterface` (the Paragraphs module ships
