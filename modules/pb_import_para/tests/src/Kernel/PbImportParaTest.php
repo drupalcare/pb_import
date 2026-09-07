@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\pb_import_para\Kernel;
 
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\filter\Entity\FilterFormat;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\Attributes\Group;
  * not a reference to file 0.
  */
 #[Group('pb_import')]
+#[RunTestsInSeparateProcesses]
 class PbImportParaTest extends KernelTestBase {
 
   /**
