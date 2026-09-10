@@ -4,3 +4,13 @@ pb_import_para.import_para:
   parent: pb_import.paragraphs
   route_name: pb_import_para.import_para
   weight: 3
+
+# Mirrored into the Drupal 11+ sidebar's `content` menu -- see the note in
+# pb_import.links.menu.yml. Without this the link exists only in the `admin`
+# menu, which the sidebar's Content section does not render.
+pb_import_para.navigation.import_para:
+  title: 'Import Paragraphs'
+  description: 'Import and Create paragraph Slideshow from a CSV file'
+  parent: pb_import.navigation
+  route_name: pb_import_para.import_para
+  weight: 3

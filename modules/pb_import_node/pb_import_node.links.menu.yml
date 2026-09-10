@@ -4,3 +4,13 @@ pb_import_node.import_node:
   parent: pb_import.paragraphs
   route_name: pb_import_node.import_node
   weight: 2
+
+# Mirrored into the Drupal 11+ sidebar's `content` menu -- see the note in
+# pb_import.links.menu.yml. Without this the link exists only in the `admin`
+# menu, which the sidebar's Content section does not render.
+pb_import_node.navigation.import_node:
+  title: 'Import Nodes'
+  description: 'Import Content'
+  parent: pb_import.navigation
+  route_name: pb_import_node.import_node
+  weight: 2

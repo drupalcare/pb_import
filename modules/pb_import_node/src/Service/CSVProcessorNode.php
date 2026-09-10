@@ -105,7 +105,16 @@ class CSVProcessorNode {
       return $this->errorResult('Failed to open CSV file at ' . $filePath);
     }
 
-    $header = fgetcsv($handle, 0, ',');
+    // PHP 8.4 deprecates calling fgetcsv() without $escape, because the default
+    // is changing. Passing '' (no escape character) rather than the historic
+    // '\\' is deliberate: '' is RFC 4180, which is what a CSV export from
+    // Excel, Sheets or a database actually produces, and it is the value PHP is
+    // moving to. The old default also CORRUPTS ordinary data -- a field ending
+    // in a backslash swallows the closing quote and merges the next column into
+    // it, which for an import module means silently wrong content rather than
+    // an error. None of this module's shipped CSVs contain a backslash, so the
+    // sample data parses identically either way.
+    $header = fgetcsv($handle, 0, ',', '"', '');
 
     if ($header === FALSE) {
       fclose($handle);
@@ -123,7 +132,7 @@ class CSVProcessorNode {
     $rows = [];
     $row_number = 1;
 
-    while (($data = fgetcsv($handle, 0, ',')) !== FALSE) {
+    while (($data = fgetcsv($handle, 0, ',', '"', '')) !== FALSE) {
       $row_number++;
 
       if (count($data) !== count($header)) {

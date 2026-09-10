@@ -18,3 +18,43 @@ pb_import.register_uploaded_files:
   parent: pb_import.paragraphs
   route_name: pb_import.register_uploaded_files
   weight: 1
+
+# ---------------------------------------------------------------------------
+# Drupal 11+ left sidebar (the `navigation` module).
+#
+# The sidebar does NOT render the `admin` menu's Content branch. Its Content
+# section renders a SEPARATE menu named `content`, which core populates in
+# \Drupal\navigation\NavigationContentLinks::addMenuLinks() -- that is where
+# Content, Files, Blocks, Media and Create come from, each added with
+# `menu_name: content`.
+#
+# So links registered only under system.admin_content are reachable at
+# /admin/content and in the classic toolbar, and are INVISIBLE in the sidebar.
+# Measured on Drupal 11.4.5: the sidebar's Content section contained exactly
+# four items -- Blocks, Content, Files, Media -- and none of this module's.
+#
+# These mirror the admin-menu links above into the `content` menu. A duplicate
+# registration, not a move: the admin entries stay, so /admin/content and any
+# site still using the classic toolbar are unchanged. The sidebar's Content
+# block renders level 1 with depth 2, so a top-level item plus one level of
+# children is exactly what it displays.
+pb_import.navigation:
+  title: 'PB Import'
+  description: 'Import content and paragraphs from CSV'
+  route_name: pb_import.paragraphs_list
+  menu_name: content
+  weight: 20
+
+pb_import.navigation.paragraphs_list:
+  title: 'Paragraphs List'
+  description: 'View a list of paragraphs'
+  parent: pb_import.navigation
+  route_name: pb_import.paragraphs_list
+  weight: 0
+
+pb_import.navigation.register_uploaded_files:
+  title: 'Register Uploaded Files'
+  description: 'Register files that have been uploaded'
+  parent: pb_import.navigation
+  route_name: pb_import.register_uploaded_files
+  weight: 1
