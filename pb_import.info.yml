@@ -19,4 +19,5 @@ dependencies:
   - drupal:views
   - entity_reference_revisions:entity_reference_revisions
   - paragraphs:paragraphs
+  - paragraphs_bundles:paragraphs_bundles
 configure: pb_import.register_uploaded_files

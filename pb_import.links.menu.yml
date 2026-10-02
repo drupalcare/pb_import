@@ -2,15 +2,8 @@ pb_import.paragraphs:
   title: 'PB Import'
   description: 'Manage paragraphs and related tasks'
   parent: system.admin_content
-  route_name: pb_import.paragraphs_list
+  route_name: pb_import.register_uploaded_files
   menu_name: admin
-
-pb_import.paragraphs_list:
-  title: 'Paragraphs List'
-  description: 'View a list of paragraphs'
-  parent: pb_import.paragraphs
-  route_name: pb_import.paragraphs_list
-  weight: 0
 
 pb_import.register_uploaded_files:
   title: 'Register Uploaded Files'
@@ -41,16 +34,9 @@ pb_import.register_uploaded_files:
 pb_import.navigation:
   title: 'PB Import'
   description: 'Import content and paragraphs from CSV'
-  route_name: pb_import.paragraphs_list
+  route_name: pb_import.register_uploaded_files
   menu_name: content
   weight: 20
-
-pb_import.navigation.paragraphs_list:
-  title: 'Paragraphs List'
-  description: 'View a list of paragraphs'
-  parent: pb_import.navigation
-  route_name: pb_import.paragraphs_list
-  weight: 0
 
 pb_import.navigation.register_uploaded_files:
   title: 'Register Uploaded Files'

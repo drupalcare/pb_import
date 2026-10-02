@@ -42,4 +42,3 @@ services:
     class: Drupal\pb_import\Hook\PbImportHooks
     arguments:
       - '@pb_import.help_renderer'
-      - '@current_route_match'

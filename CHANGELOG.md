@@ -30,21 +30,25 @@ versions PB 2.x targets.
   importer has always done. The two CSV-only columns `csv_image_alt` and
   `csv_image_title` are no longer copied into the entity either; they are
   columns, not fields.
-- **The paragraphs list and the delete form returned HTTP 500 on any site with
-  assertions enabled.** Two `use` statements named classes that do not exist —
-  `Drupal\paragraphs\ParagraphStorageInterface` (the Paragraphs module ships
-  `ParagraphStorageSchema`, not a storage interface) and
-  `Drupal\paragraphs_type\ParagraphsTypeInterface` (the real one is
-  `Drupal\paragraphs\ParagraphsTypeInterface`). `instanceof` against an
-  undefined class is simply `FALSE`, so each `assert()` beneath them threw an
-  `AssertionError`. Production hides this because `zend.assertions=-1` compiles
-  asserts out; every development environment hit it.
 - **The module could not run on Drupal 12.**
   `FileSystemInterface::EXISTS_RENAME` was deprecated in Drupal 10.3 and is
   removed in Drupal 12; four uses across the two import forms are now
   `FileExists::Rename`.
 
+### Removed
+- **The Paragraphs List moved to Paragraphs Bundles; same address.**
+  `/admin/content/paragraphs/paragraphs-list`, the paragraph edit form and the
+  delete route are served by `paragraphs_bundles` 2.x now, and the save-then-back
+  redirect with them; nothing of them is left in this module (a Kernel test
+  keeps it that way). The list has its own permission there, **`access
+  paragraphs list`**, replacing `administer site configuration` for the list and
+  the undefined `administer paragraphs` for edit. The "PB Import" menu parent now
+  opens Register Uploaded Files.
+
 ### Changed
+- **`pb_import` now depends on `paragraphs_bundles` in `pb_import.info.yml`**,
+  not only in composer: a site that has the importer has the list that reviews
+  what it imported.
 - `core_version_requirement` is now `^11.3 || ^12` on all three modules, and
   `drupal/core` matches it in every `composer.json`. Drupal 10 support ends
   with the 1.0.x branch.

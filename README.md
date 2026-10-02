@@ -211,7 +211,7 @@ image.jpg,Alt text,Title,Section Title,Tag1|Tag2,<p>Content</p>
 
 #### Usage Paths
 - Import interface: `/admin/content/paragraphs/pb-import-para`
-- Paragraph management: `/admin/content/paragraphs/paragraphs-list`
+- The Paragraphs List (list, search, sort, edit, bulk delete) is part of the Paragraphs Bundles module now, at the same address, `/admin/content/paragraphs/paragraphs-list`. It needs that module's `access paragraphs list` permission; see its README. PB Import no longer provides it.
 
 ## Configuration
 
@@ -251,12 +251,11 @@ sites/default/files/
 
 ### Permissions
 
-Required permissions for importing:
-- `administer site configuration`
-- `administer content`
-- `administer paragraphs`
-- `create [content_type] content`
-- `edit own [content_type] content`
+The import screens are protected by their routes; the importer itself does not check any other permission while it runs (it creates content through the entity API, not as the current user).
+- `administer site configuration`: Register Uploaded Files and Import Nodes.
+- `administer content`: Import Paragraphs.
+
+Reviewing or editing what was imported is a separate matter: the Paragraphs List (in Paragraphs Bundles) needs `access paragraphs list`.
 
 ## CSV File Format
 
