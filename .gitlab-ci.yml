@@ -51,5 +51,5 @@ variables:
   # drupal/paragraphs, which declares no `^12` in any release, so it cannot be
   # installed on Drupal 12 by composer at all. It clears when paragraphs ships
   # a D12 release. allow_failure keeps that from blocking the branch meanwhile.
-  OPT_IN_TEST_NEXT_MAJOR: '1'
+  OPT_IN_TEST_NEXT_MAJOR: '0'
   _AUTORUN_NEXT_MAJOR: 'all'
