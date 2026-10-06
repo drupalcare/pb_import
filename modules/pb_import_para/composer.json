@@ -15,7 +15,7 @@
     "require": {
         "drupal/core": "^11.3 || ^12",
         "drupal/pb_import": "*",
-        "drupal/paragraphs_bundles": "^2.0@dev"
+        "drupal/paragraphs_bundles": "^2.0"
     },
     "support": {
         "issues": "https://drupal.org/project/issues/pb_import",

@@ -55,18 +55,10 @@ versions PB 2.x targets.
 - **`drupal/paragraphs_bundles` is declared in composer for the first time.**
   `pb_import_para` has always depended on it in `info.yml`, but composer never
   knew, so `composer require drupal/pb_import` would not pull it in. It is now
-  required at `^2.0@dev`, which also stops composer resolving PB 1.x alongside
-  this branch.
-
-  The `@dev` flag is **temporary and must be removed before 2.0.0 is tagged.**
-  Paragraphs Bundles 2.0.0 does not exist yet — only its `2.0.x-dev` branch
-  release does — so a plain `^2.0` cannot be satisfied under this file's
-  `minimum-stability: stable`, and it is what made the first CI run of this
-  branch fail at the `composer` job before any other job could start. `@dev` is
-  a per-package stability flag, so it relaxes nothing else, and because
-  `prefer-stable` is true it will pick 2.0.0 the moment that tag exists.
-  Verified both ways against `packages.drupal.org`: `^2.0` reproduces the CI
-  error exactly, `^2.0@dev` resolves and locks `dev-2.0.x`.
+  required at `^2.0`, which also stops composer resolving PB 1.x alongside
+  this branch. (Paragraphs Bundles 2.0.0 is now published, so the temporary
+  `@dev` flag this needed while only the `2.0.x-dev` branch release existed has
+  been removed.)
 
 ### Added
 - `phpstan.neon.dist`, so the deprecation check that found the Drupal 12
