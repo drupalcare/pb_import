@@ -6,11 +6,11 @@ Imports a CSV file into Paragraphs Bundles paragraph trees.
 
 One import creates a three-level tree:
 
-1. a **parent** paragraph — `slideshow_bundle`, `accordion_bundle` or
+1. a **parent** paragraph: `slideshow_bundle`, `accordion_bundle` or
    `tabs_bundle`, holding the title you type into the form;
-2. one **section** paragraph per CSV row — `slideshow_section_bundle`,
+2. one **section** paragraph per CSV row: `slideshow_section_bundle`,
    `accordion_section_bundle` or `tab_section_bundle`, titled from the row;
-3. one **target** paragraph per section — `pb_target_bundle`, carrying the
+3. one **target** paragraph per section: `pb_target_bundle`, carrying the
    row's body, its image and its taxonomy terms.
 
 Requires **Paragraphs Bundles 2.x**. The bundle and field names it writes to
@@ -36,7 +36,7 @@ working examples of both shapes.
 ## Images
 
 Images are **not** downloaded. Put the files in a folder under the public
-files directory first — `sites/default/files/images`, say — then give the
+files directory first (`sites/default/files/images`, say) then give the
 form that folder name. Rows whose `csv_image_url` is empty get no image field
 at all.
 

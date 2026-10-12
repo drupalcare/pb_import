@@ -61,7 +61,7 @@ This module is ideal for:
 ### Paragraphs Bundles
 - **PB Import 2.x requires Paragraphs Bundles 2.x.** The paragraph
   bundles and field names it writes to are unchanged between PB 1.x and
-  2.x, so the importer itself needed no rewrite — but 2.x is built and
+  2.x, so the importer itself needed no rewrite, but 2.x is built and
   tested against PB 2.x and Drupal 11.3+/12.
 - Staying on Drupal 10, or on Paragraphs Bundles 1.x? Use the **1.0.x**
   branch of this module.

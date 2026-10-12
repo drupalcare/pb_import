@@ -3,7 +3,7 @@
 All notable changes to `pb_import` are recorded here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [2.0.0] — unreleased
+## [2.0.0] (unreleased)
 
 Matches **Paragraphs Bundles 2.x** on Drupal **11.3+ / 12**.
 
@@ -23,7 +23,7 @@ versions PB 2.x targets.
 - **A row with no image left a broken image reference on every paragraph it
   created.** `ParagraphCreator` copies each CSV column into the entity values
   before the image block runs, so an empty `csv_image_url` arrived as `''` and
-  Drupal stored it as an image item with `target_id: 0` — a reference to a file
+  Drupal stored it as an image item with `target_id: 0`, a reference to a file
   that cannot exist. Importing the shipped `para-without-images.csv` produced 30
   such items and 60 "Missing file with ID 0" warnings per run. The image field
   is now cleared before the resolved file is set, matching what the node
