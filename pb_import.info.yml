@@ -1,6 +1,6 @@
 name: 'PB Import'
 type: module
-description: 'Imports content and paragraphs from a CSV file.'
+description: 'Provides the shared CSV upload form and services used by the PB Import Node and PB Import Paragraph sub-modules.'
 core_version_requirement: ^11.3 || ^12
 package: 'Paragraphs Bundles'
 dependencies:

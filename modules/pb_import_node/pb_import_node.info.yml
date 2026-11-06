@@ -1,6 +1,6 @@
 name: 'PB Import Node'
 type: module
-description: 'Provides a content type with fields for imported content, ready for use in a slideshow view.'
+description: 'Provides a content type with fields for content imported from a CSV file.'
 core_version_requirement: ^11.3 || ^12
 package: 'Paragraphs Bundles'
 dependencies:
