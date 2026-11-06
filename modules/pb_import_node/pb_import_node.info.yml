@@ -1,8 +1,8 @@
 name: 'PB Import Node'
 type: module
-description: 'This module create a content type with some fields to import content and can be used in Views Slideshow.'
+description: 'Provides a content type with fields for imported content, ready for use in a slideshow view.'
 core_version_requirement: ^11.3 || ^12
-package: Paragraphs
+package: 'Paragraphs Bundles'
 dependencies:
   - pb_import:pb_import
 configure: pb_import_node.import_node

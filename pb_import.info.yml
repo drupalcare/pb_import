@@ -1,8 +1,8 @@
 name: 'PB Import'
 type: module
-description: 'A module to import content and create nodes/paragraphs from a CSV file.'
+description: 'Imports content and paragraphs from a CSV file.'
 core_version_requirement: ^11.3 || ^12
-package: Paragraphs
+package: 'Paragraphs Bundles'
 dependencies:
   - drupal:block
   - drupal:field
