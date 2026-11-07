@@ -143,6 +143,35 @@ class PBImportParaForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
+    $form['#attached']['library'][] = 'pb_import/brand';
+    $form['band'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'header',
+      '#attributes' => ['class' => ['pb-import-band']],
+      '#weight' => -100,
+      'logo' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#attributes' => ['class' => ['pb-import-band__logo'], 'aria-hidden' => 'true'],
+      ],
+      'text' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['pb-import-band__text']],
+        'name' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('PB Import'),
+          '#attributes' => ['class' => ['pb-import-band__name']],
+        ],
+        'purpose' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('Imports paragraphs from a CSV file into Paragraphs Bundles paragraph types.'),
+          '#attributes' => ['class' => ['pb-import-band__purpose']],
+        ],
+      ],
+    ];
+
     $options = [];
     $missing_modules = [];
 

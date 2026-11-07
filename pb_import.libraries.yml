@@ -1,0 +1,4 @@
+brand:
+  css:
+    theme:
+      css/pb-import-brand.css: {}

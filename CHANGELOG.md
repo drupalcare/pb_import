@@ -6,6 +6,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2.0.0] (unreleased)
 
 - Extend and Appearance pages: every module and theme description is a short, professional statement that begins with a verb; credits, links and version notes moved out of the info files.
+- Paragraphs Bundles logo in a header on the three import pages.
 
 Matches **Paragraphs Bundles 2.x** on Drupal **11.3+ / 12**.
 
