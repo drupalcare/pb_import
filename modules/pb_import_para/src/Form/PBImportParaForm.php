@@ -198,11 +198,21 @@ class PBImportParaForm extends FormBase {
     }
 
     if (!empty($missing_modules)) {
+      // Core's status_messages theme gives the box its warning heading for
+      // screen readers and the theme's message landmark, which a hand-built
+      // div with message classes lacked.
       $form['missing_modules'] = [
-        '#type' => 'markup',
-        '#markup' => '<div class="messages messages--warning">' . $this->t('The following modules are missing: @modules', [
-          '@modules' => implode(', ', $missing_modules),
-        ]) . '</div>',
+        '#theme' => 'status_messages',
+        '#message_list' => [
+          'warning' => [
+            $this->t('The following modules are missing: @modules', [
+              '@modules' => implode(', ', $missing_modules),
+            ]),
+          ],
+        ],
+        '#status_headings' => [
+          'warning' => $this->t('Warning message'),
+        ],
       ];
     }
 

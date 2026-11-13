@@ -7,6 +7,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Extend and Appearance pages: every module and theme description is a short, professional statement that begins with a verb; credits, links and version notes moved out of the info files.
 - Paragraphs Bundles logo in a header on the three import pages.
+- Accessibility: the missing-modules notice on the paragraph import page is a standard Drupal warning message, with its heading for screen readers.
 
 Matches **Paragraphs Bundles 2.x** on Drupal **11.3+ / 12**.
 
